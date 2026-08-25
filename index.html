@@ -188,14 +188,15 @@ async function createShort() {
   try {
 
     const response = await fetch(
-      unknown-files-agent.gh4sy6ngr6.workers.dev
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          prompt: `
+      const response = await fetch(
+  "/api/create-story",
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      prompt: `
 Create one original YouTube Shorts mystery story.
 
 Genre:
@@ -211,7 +212,6 @@ Structure:
 Hook → Setup → Escalation → Twist → Open Ending.
 
 The story must be completely original.
-Do not claim that fictional events are real.
 
 Return:
 title
@@ -220,27 +220,6 @@ scenes
 visual prompts
 voice direction
 `
-        })
-      }
-    );
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.error || "Agent error");
-    }
-
-    status.innerHTML =
-      '<span class="dot"></span> 🎬 Story created successfully!';
-
-    console.log(data);
-
-  } catch (error) {
-
-    status.innerHTML =
-      '<span class="dot"></span> ❌ ' + error.message;
-
-    console.error(error);
-
+    })
   }
-}
+);
