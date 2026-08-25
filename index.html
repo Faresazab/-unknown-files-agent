@@ -178,26 +178,69 @@
 
 <script>
 
-function createShort() {
+async function createShort() {
 
   const status = document.getElementById("statusText");
 
   status.innerHTML =
-    '<span class="dot"></span> AI is preparing today\'s story...';
+    '<span class="dot"></span> AI is creating today\'s story...';
 
-  setTimeout(() => {
+  try {
+
+    const response = await fetch(
+      "PUT-YOUR-WORKER-URL-HERE",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          prompt: `
+Create one original YouTube Shorts mystery story.
+
+Genre:
+realistic mystery + psychological horror.
+
+Length:
+45-60 seconds.
+
+Language:
+English.
+
+Structure:
+Hook → Setup → Escalation → Twist → Open Ending.
+
+The story must be completely original.
+Do not claim that fictional events are real.
+
+Return:
+title
+script
+scenes
+visual prompts
+voice direction
+`
+        })
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Agent error");
+    }
+
     status.innerHTML =
-      '<span class="dot"></span> Story generated. Preparing production...';
-  }, 2000);
+      '<span class="dot"></span> 🎬 Story created successfully!';
 
-  setTimeout(() => {
+    console.log(data);
+
+  } catch (error) {
+
     status.innerHTML =
-      '<span class="dot"></span> Prototype ready. AI production engine coming next.';
-  }, 4000);
+      '<span class="dot"></span> ❌ ' + error.message;
 
+    console.error(error);
+
+  }
 }
-
-</script>
-
-</body>
-</html>
