@@ -3,8 +3,11 @@ export default {
 
     const url = new URL(request.url);
 
-    // API endpoint for the AI agent
-    if (url.pathname === "/api/create-story" && request.method === "POST") {
+    // AI STORY API
+    if (
+      url.pathname === "/api/create-story" &&
+      request.method === "POST"
+    ) {
 
       try {
 
@@ -27,12 +30,14 @@ Hook → Setup → Escalation → Twist → Open Ending.
 
 The story must be completely original.
 
+Do not claim fictional events are real.
+
 Return:
-title
-script
-scenes
-visual prompts
-voice direction
+TITLE:
+SCRIPT:
+SCENES:
+VISUAL PROMPTS:
+VOICE DIRECTION:
 `;
 
         const result = await env.AI.run(
@@ -42,7 +47,7 @@ voice direction
               {
                 role: "system",
                 content:
-                  "You are the Story Agent for UNKNOWN FILES, an original YouTube Shorts channel."
+                  "You are the Story Agent for UNKNOWN FILES, a YouTube Shorts channel."
               },
               {
                 role: "user",
@@ -55,9 +60,10 @@ voice direction
         return new Response(
           JSON.stringify({
             success: true,
-            result
+            result: result
           }),
           {
+            status: 200,
             headers: {
               "Content-Type": "application/json",
               "Access-Control-Allow-Origin": "*"
@@ -80,10 +86,21 @@ voice direction
             }
           }
         );
+
       }
     }
 
-    // Serve the Web App
-    return env.ASSETS.fetch(request);
+    // Simple response for normal browser visits
+    return new Response(
+      "UNKNOWN FILES AI Agent is online. Use POST /api/create-story to generate a story.",
+      {
+        status: 200,
+        headers: {
+          "Content-Type": "text/plain",
+          "Access-Control-Allow-Origin": "*"
+        }
+      }
+    );
+
   }
 };
