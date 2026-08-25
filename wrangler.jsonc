@@ -1,0 +1,12 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "unknown-files-agent",
+  "main": "worker.js",
+  "compatibility_date": "2026-08-25",
+  "assets": {
+    "directory": "./"
+  },
+  "ai": {
+    "binding": "AI"
+  }
+}
