@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Unknown Files AI Manager</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      background: #08090d;
+      color: white;
+      min-height: 100vh;
+    }
+
+    .app {
+      max-width: 600px;
+      margin: auto;
+      padding: 25px 18px;
+    }
+
+    .header {
+      padding: 20px 0 30px;
+    }
+
+    .logo {
+      font-size: 13px;
+      letter-spacing: 4px;
+      color: #888;
+    }
+
+    h1 {
+      margin-top: 8px;
+      font-size: 30px;
+    }
+
+    .subtitle {
+      color: #777;
+      margin-top: 8px;
+    }
+
+    .create {
+      width: 100%;
+      padding: 22px;
+      border: 0;
+      border-radius: 18px;
+      background: white;
+      color: black;
+      font-size: 18px;
+      font-weight: bold;
+      margin: 10px 0 25px;
+      cursor: pointer;
+    }
+
+    .create:active {
+      transform: scale(.98);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .card {
+      background: #12141a;
+      border: 1px solid #22252d;
+      border-radius: 18px;
+      padding: 20px;
+      min-height: 130px;
+    }
+
+    .icon {
+      font-size: 28px;
+      margin-bottom: 15px;
+    }
+
+    .card h2 {
+      font-size: 16px;
+    }
+
+    .card p {
+      color: #777;
+      font-size: 13px;
+      margin-top: 6px;
+    }
+
+    .status {
+      margin-top: 25px;
+      padding: 18px;
+      border-radius: 18px;
+      background: #101217;
+      border: 1px solid #22252d;
+    }
+
+    .status-title {
+      color: #888;
+      font-size: 12px;
+      letter-spacing: 2px;
+    }
+
+    #statusText {
+      margin-top: 10px;
+      font-size: 15px;
+    }
+
+    .dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      background: #35d07f;
+      border-radius: 50%;
+      margin-right: 8px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="app">
+
+    <div class="header">
+      <div class="logo">UNKNOWN FILES</div>
+      <h1>AI Manager</h1>
+      <div class="subtitle">
+        Your autonomous YouTube Shorts studio.
+      </div>
+    </div>
+
+    <button class="create" onclick="createShort()">
+      🎬 Create Today's Short
+    </button>
+
+    <div class="grid">
+
+      <div class="card">
+        <div class="icon">📚</div>
+        <h2>Story Library</h2>
+        <p>Stories created by the AI.</p>
+      </div>
+
+      <div class="card">
+        <div class="icon">📊</div>
+        <h2>Analytics</h2>
+        <p>Track your channel.</p>
+      </div>
+
+      <div class="card">
+        <div class="icon">🎬</div>
+        <h2>Videos</h2>
+        <p>Generated Shorts.</p>
+      </div>
+
+      <div class="card">
+        <div class="icon">⚙️</div>
+        <h2>Settings</h2>
+        <p>Control your AI.</p>
+      </div>
+
+    </div>
+
+    <div class="status">
+      <div class="status-title">AGENT STATUS</div>
+
+      <div id="statusText">
+        <span class="dot"></span>
+        Waiting for command...
+      </div>
+    </div>
+
+  </div>
+
+<script>
+
+function createShort() {
+
+  const status = document.getElementById("statusText");
+
+  status.innerHTML =
+    '<span class="dot"></span> AI is preparing today\'s story...';
+
+  setTimeout(() => {
+    status.innerHTML =
+      '<span class="dot"></span> Story generated. Preparing production...';
+  }, 2000);
+
+  setTimeout(() => {
+    status.innerHTML =
+      '<span class="dot"></span> Prototype ready. AI production engine coming next.';
+  }, 4000);
+
+}
+
+</script>
+
+</body>
+</html>
