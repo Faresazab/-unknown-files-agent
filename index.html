@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#08090d">
   <title>Unknown Files AI Manager</title>
 
   <style>
@@ -43,6 +44,7 @@
     .subtitle {
       color: #777;
       margin-top: 8px;
+      line-height: 1.5;
     }
 
     .create {
@@ -60,6 +62,10 @@
 
     .create:active {
       transform: scale(.98);
+    }
+
+    .create:disabled {
+      opacity: .5;
     }
 
     .grid {
@@ -108,6 +114,7 @@
     #statusText {
       margin-top: 10px;
       font-size: 15px;
+      line-height: 1.5;
     }
 
     .dot {
@@ -118,6 +125,27 @@
       border-radius: 50%;
       margin-right: 8px;
     }
+
+    .story {
+      display: none;
+      margin-top: 20px;
+      padding: 20px;
+      background: #12141a;
+      border: 1px solid #22252d;
+      border-radius: 18px;
+    }
+
+    .story h2 {
+      font-size: 20px;
+      margin-bottom: 15px;
+    }
+
+    .story pre {
+      white-space: pre-wrap;
+      color: #ccc;
+      line-height: 1.6;
+      font-size: 14px;
+    }
   </style>
 </head>
 
@@ -127,13 +155,19 @@
 
     <div class="header">
       <div class="logo">UNKNOWN FILES</div>
+
       <h1>AI Manager</h1>
+
       <div class="subtitle">
         Your autonomous YouTube Shorts studio.
       </div>
     </div>
 
-    <button class="create" onclick="createShort()">
+    <button
+      id="createButton"
+      class="create"
+      onclick="createShort()"
+    >
       🎬 Create Today's Short
     </button>
 
@@ -166,12 +200,24 @@
     </div>
 
     <div class="status">
-      <div class="status-title">AGENT STATUS</div>
+
+      <div class="status-title">
+        AGENT STATUS
+      </div>
 
       <div id="statusText">
         <span class="dot"></span>
         Waiting for command...
       </div>
+
+    </div>
+
+    <div id="storyBox" class="story">
+
+      <h2>📝 Generated Story</h2>
+
+      <pre id="storyText"></pre>
+
     </div>
 
   </div>
@@ -180,9 +226,14 @@
 
 async function createShort() {
 
-  async function createShort() {
-
+  const button = document.getElementById("createButton");
   const status = document.getElementById("statusText");
+  const storyBox = document.getElementById("storyBox");
+  const storyText = document.getElementById("storyText");
+
+  button.disabled = true;
+
+  storyBox.style.display = "none";
 
   status.innerHTML =
     '<span class="dot"></span> 🤖 Connecting to AI Agent...';
@@ -190,15 +241,17 @@ async function createShort() {
   try {
 
     const response = await fetch(
-      const response = await fetch(
-  "/api/create-story",
-  {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      prompt: `
+      "/api/create-story",
+      {
+        method: "POST",
+
+        headers: {
+          "Content-Type": "application/json"
+        },
+
+        body: JSON.stringify({
+
+          prompt: `
 Create one original YouTube Shorts mystery story.
 
 Genre:
@@ -215,13 +268,77 @@ Hook → Setup → Escalation → Twist → Open Ending.
 
 The story must be completely original.
 
+Do not claim that fictional events are real.
+
+Make the first sentence extremely strong.
+
 Return:
-title
-script
-scenes
-visual prompts
-voice direction
-`
-    })
+
+TITLE:
+SCRIPT:
+SCENES:
+VISUAL PROMPTS:
+VOICE DIRECTION:
+          `
+
+        })
+
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+
+      throw new Error(
+        data.error || "AI Agent error"
+      );
+
+    }
+
+    let result = data.result;
+
+    if (
+      result &&
+      typeof result === "object"
+    ) {
+
+      result = JSON.stringify(
+        result,
+        null,
+        2
+      );
+
+    }
+
+    storyText.textContent = result;
+
+    storyBox.style.display = "block";
+
+    status.innerHTML =
+      '<span class="dot"></span> ✅ Story created successfully!';
+
   }
-);
+
+  catch (error) {
+
+    status.innerHTML =
+      '<span class="dot"></span> ❌ ' +
+      error.message;
+
+    console.error(error);
+
+  }
+
+  finally {
+
+    button.disabled = false;
+
+  }
+
+}
+
+</script>
+
+</body>
+</html>
