@@ -8,5 +8,11 @@
   },
   "ai": {
     "binding": "AI"
-  }
+  },
+  "kv_namespaces": [
+    {
+      "binding": "STORIES",
+      "id": "9c38de9a91c44277adbba9584fa2c51d"
+    }
+  ]
 }
