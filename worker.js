@@ -40,7 +40,6 @@ export default {
         const prompt = `
 Create ONE original YouTube Shorts mystery story.
 
-IMPORTANT:
 Do NOT explain your reasoning.
 Do NOT describe your thinking process.
 Do NOT say "let me think".
@@ -70,7 +69,7 @@ TITLE:
 [short catchy title]
 
 SCRIPT:
-[the complete 45-60 second narration]
+[complete 45-60 second narration]
 
 SCENES:
 1. [scene description]
@@ -96,33 +95,35 @@ ${body.prompt || "Create today's mystery short."}
         const result = await env.AI.run(
           "@cf/qwen/qwen3-30b-a3b-fp8",
           {
-            const result = await env.AI.run(
-  "@cf/qwen/qwen3-30b-a3b-fp8",
-  {
-    messages: [
-      {
-        role: "system",
-        content:
-          "You are a professional YouTube Shorts writer. " +
-          "Do not reveal reasoning or analysis. " +
-          "Return only the requested final content."
-      },
-      {
-        role: "user",
-        content: prompt
-      }
-    ],
-    max_tokens: 1200,
-    temperature: 0.7,
-    top_p: 0.9
-  }
-);
+            messages: [
+              {
+                role: "system",
+                content:
+                  "You are a professional YouTube Shorts writer. " +
+                  "Do not reveal reasoning or analysis. " +
+                  "Return only the requested final content."
+              },
+              {
+                role: "user",
+                content: prompt
+              }
+            ],
+            max_tokens: 1200,
+            temperature: 0.7,
+            top_p: 0.9
+          }
+        );
 
         let story = "";
 
-        if (result && typeof result.response === "string") {
+        if (
+          result &&
+          typeof result.response === "string"
+        ) {
           story = result.response;
-        } else if (typeof result === "string") {
+        } else if (
+          typeof result === "string"
+        ) {
           story = result;
         }
 
@@ -132,23 +133,22 @@ ${body.prompt || "Create today's mystery short."}
           return new Response(
             JSON.stringify({
               success: false,
-              error: "Qwen3 returned an empty response.",
+              error: "Qwen3 returned an empty response."
             }),
             {
               status: 502,
               headers: {
                 ...corsHeaders,
-                "Content-Type": "application/json",
-              },
+                "Content-Type": "application/json"
+              }
             }
           );
         }
 
-        // Remove accidental reasoning if the model includes it
         const markers = [
           "Final answer:",
           "FINAL ANSWER:",
-          "Here is the final answer:",
+          "Here is the final answer:"
         ];
 
         for (const marker of markers) {
@@ -171,7 +171,7 @@ ${body.prompt || "Create today's mystery short."}
         const storyData = {
           id,
           story,
-          createdAt: new Date().toISOString(),
+          createdAt: new Date().toISOString()
         };
 
         if (env.STORIES) {
@@ -186,19 +186,22 @@ ${body.prompt || "Create today's mystery short."}
             success: true,
             story,
             id,
-            createdAt: storyData.createdAt,
+            createdAt: storyData.createdAt
           }),
           {
             status: 200,
             headers: {
               ...corsHeaders,
-              "Content-Type": "application/json",
-            },
+              "Content-Type": "application/json"
+            }
           }
         );
 
       } catch (error) {
-        console.error(error);
+        console.error(
+          "CREATE STORY ERROR:",
+          error
+        );
 
         return new Response(
           JSON.stringify({
@@ -207,14 +210,14 @@ ${body.prompt || "Create today's mystery short."}
             message:
               error instanceof Error
                 ? error.message
-                : String(error),
+                : String(error)
           }),
           {
             status: 500,
             headers: {
               ...corsHeaders,
-              "Content-Type": "application/json",
-            },
+              "Content-Type": "application/json"
+            }
           }
         );
       }
@@ -223,15 +226,15 @@ ${body.prompt || "Create today's mystery short."}
     return new Response(
       JSON.stringify({
         success: false,
-        error: "Not found",
+        error: "Not found"
       }),
       {
         status: 404,
         headers: {
           ...corsHeaders,
-          "Content-Type": "application/json",
-        },
+          "Content-Type": "application/json"
+        }
       }
     );
-  },
+  }
 };
