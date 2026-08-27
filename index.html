@@ -1,123 +1,578 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+
 <head>
+
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AI Test</title>
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>Unknown Files AI Manager</title>
 
   <style>
-    body {
+
+    * {
+      box-sizing: border-box;
       margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
       background: #08090d;
       color: white;
-      font-family: Arial, sans-serif;
       min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
     }
 
-    .box {
-      width: 90%;
-      max-width: 500px;
-      background: #12141a;
-      padding: 25px;
-      border-radius: 20px;
-      text-align: center;
+    .app {
+      max-width: 600px;
+      margin: auto;
+      padding: 25px 18px;
     }
 
-    button {
+    .header {
+      padding: 20px 0 30px;
+    }
+
+    .logo {
+      font-size: 13px;
+      letter-spacing: 4px;
+      color: #888;
+    }
+
+    h1 {
+      margin-top: 8px;
+      font-size: 30px;
+    }
+
+    .subtitle {
+      color: #777;
+      margin-top: 8px;
+      line-height: 1.5;
+    }
+
+    .create {
       width: 100%;
-      padding: 18px;
+      padding: 22px;
       border: 0;
-      border-radius: 14px;
+      border-radius: 18px;
+      background: white;
+      color: black;
       font-size: 18px;
       font-weight: bold;
+      margin: 10px 0 25px;
       cursor: pointer;
-      margin-top: 20px;
     }
 
-    #result {
-      margin-top: 20px;
-      padding: 15px;
-      background: #08090d;
-      border-radius: 12px;
-      white-space: pre-wrap;
-      text-align: left;
+    .create:active {
+      transform: scale(.98);
     }
+
+    .create:disabled {
+      opacity: .5;
+      cursor: wait;
+    }
+
+    .status {
+      margin-top: 25px;
+      padding: 18px;
+      border-radius: 18px;
+      background: #101217;
+      border: 1px solid #22252d;
+    }
+
+    .status-title {
+      color: #888;
+      font-size: 12px;
+      letter-spacing: 2px;
+    }
+
+    #statusText {
+      margin-top: 10px;
+      font-size: 15px;
+      line-height: 1.5;
+    }
+
+    .dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      background: #35d07f;
+      border-radius: 50%;
+      margin-right: 8px;
+    }
+
+    .story {
+      margin-top: 20px;
+      padding: 20px;
+      background: #12141a;
+      border: 1px solid #22252d;
+      border-radius: 18px;
+      display: none;
+    }
+
+    .story h2 {
+      font-size: 20px;
+      margin-bottom: 15px;
+    }
+
+    #storyText {
+      white-space: pre-wrap;
+      color: #ccc;
+      line-height: 1.6;
+      font-size: 14px;
+    }
+
+    .video {
+      display: none;
+      margin-top: 20px;
+      padding: 20px;
+      background: #12141a;
+      border: 1px solid #22252d;
+      border-radius: 18px;
+    }
+
+    .video h2 {
+      margin-bottom: 15px;
+    }
+
+    video {
+      width: 100%;
+      border-radius: 14px;
+      background: black;
+    }
+
+    .videoLink {
+      display: block;
+      margin-top: 15px;
+      padding: 14px;
+      background: white;
+      color: black;
+      text-align: center;
+      text-decoration: none;
+      border-radius: 12px;
+      font-weight: bold;
+    }
+
   </style>
+
 </head>
+
 
 <body>
 
-  <div class="box">
+  <div class="app">
 
-    <h1>🤖 Workers AI Test</h1>
+    <div class="header">
 
-    <p>Test Qwen3 connection</p>
+      <div class="logo">
+        UNKNOWN FILES
+      </div>
 
-    <button onclick="testAI()" id="button">
-      TEST AI
+      <h1>
+        AI Manager
+      </h1>
+
+      <div class="subtitle">
+        Your autonomous YouTube Shorts studio.
+      </div>
+
+    </div>
+
+
+    <button
+      id="createButton"
+      class="create"
+      onclick="createVideo()"
+    >
+      🎬 Create Today's Short
     </button>
 
-    <div id="result">
-      Waiting...
+
+    <div class="status">
+
+      <div class="status-title">
+        AGENT STATUS
+      </div>
+
+      <div id="statusText">
+
+        <span class="dot"></span>
+        Waiting for command...
+
+      </div>
+
+    </div>
+
+
+    <div
+      id="storyBox"
+      class="story"
+    >
+
+      <h2>
+        📝 Generated Story
+      </h2>
+
+      <div id="storyText"></div>
+
+    </div>
+
+
+    <div
+      id="videoBox"
+      class="video"
+    >
+
+      <h2>
+        🎬 Your Video
+      </h2>
+
+      <video
+        id="videoPlayer"
+        controls
+        playsinline
+      ></video>
+
+      <a
+        id="videoLink"
+        class="videoLink"
+        target="_blank"
+      >
+        Open Video
+      </a>
+
     </div>
 
   </div>
 
-  <script>
-    async function testAI() {
 
-      const button =
-        document.getElementById("button");
+<script>
 
-      const result =
-        document.getElementById("result");
+async function createVideo() {
 
-      button.disabled = true;
+  const button =
+    document.getElementById(
+      "createButton"
+    );
 
-      result.textContent =
-        "⏳ Testing AI...";
+  const status =
+    document.getElementById(
+      "statusText"
+    );
 
-      try {
+  const storyBox =
+    document.getElementById(
+      "storyBox"
+    );
 
-        const response =
-          await fetch("/api/test-ai", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json"
-            }
-          });
+  const storyText =
+    document.getElementById(
+      "storyText"
+    );
 
-        const data =
-          await response.json();
+  const videoBox =
+    document.getElementById(
+      "videoBox"
+    );
 
-        if (!response.ok) {
-          throw new Error(
-            data.error || "AI test failed"
-          );
+  const videoPlayer =
+    document.getElementById(
+      "videoPlayer"
+    );
+
+  const videoLink =
+    document.getElementById(
+      "videoLink"
+    );
+
+
+  button.disabled = true;
+
+  storyBox.style.display =
+    "none";
+
+  videoBox.style.display =
+    "none";
+
+
+  status.innerHTML =
+    '<span class="dot"></span> 🤖 Creating story...';
+
+
+  try {
+
+    // =================================
+    // CREATE STORY + VIDEO
+    // =================================
+
+    const response =
+      await fetch(
+        "/api/create-video",
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json"
+          },
+
+          body: JSON.stringify({
+
+            prompt:
+              "Create today's original mystery YouTube Short."
+
+          })
+
         }
+      );
 
-        result.textContent =
-          "✅ AI WORKS\n\n" +
-          JSON.stringify(
-            data,
-            null,
-            2
-          );
 
-      } catch (error) {
+    const data =
+      await response.json();
 
-        result.textContent =
-          "❌ FAILED\n\n" +
-          error.message;
+
+    if (!response.ok) {
+
+      throw new Error(
+        data.error ||
+        "Video generation failed."
+      );
+
+    }
+
+
+    if (!data.success) {
+
+      throw new Error(
+        data.error ||
+        "Video generation failed."
+      );
+
+    }
+
+
+    // =================================
+    // SHOW STORY
+    // =================================
+
+    if (data.title) {
+
+      storyText.textContent =
+        "TITLE:\n" +
+        data.title;
+
+    }
+
+    storyBox.style.display =
+      "block";
+
+
+    // =================================
+    // RENDER STARTED
+    // =================================
+
+    const renderId =
+      data.renderId;
+
+
+    if (!renderId) {
+
+      throw new Error(
+        "No render ID returned."
+      );
+
+    }
+
+
+    status.innerHTML =
+      '<span class="dot"></span> 🎬 Video is rendering...';
+
+
+    // =================================
+    // CHECK VIDEO STATUS
+    // =================================
+
+    await checkVideoStatus(
+      renderId,
+      status,
+      videoBox,
+      videoPlayer,
+      videoLink
+    );
+
+
+  } catch (error) {
+
+    console.error(error);
+
+    status.innerHTML =
+      '<span class="dot"></span> ❌ ' +
+      error.message;
+
+  }
+
+
+  button.disabled = false;
+
+}
+
+
+
+// =====================================
+// CHECK CREATOMATE STATUS
+// =====================================
+
+async function checkVideoStatus(
+  renderId,
+  status,
+  videoBox,
+  videoPlayer,
+  videoLink
+) {
+
+  let attempts = 0;
+
+  const maxAttempts = 60;
+
+
+  while (
+    attempts < maxAttempts
+  ) {
+
+    attempts++;
+
+
+    try {
+
+      const response =
+        await fetch(
+          "/api/video-status?id=" +
+          encodeURIComponent(
+            renderId
+          )
+        );
+
+
+      const data =
+        await response.json();
+
+
+      if (!response.ok) {
+
+        throw new Error(
+          data.error ||
+          "Could not check video status."
+        );
 
       }
 
-      button.disabled = false;
+
+      const currentStatus =
+        data.status;
+
+
+      // =============================
+      // SUCCESS
+      // =============================
+
+      if (
+        currentStatus ===
+          "succeeded"
+      ) {
+
+        if (!data.videoUrl) {
+
+          throw new Error(
+            "Video rendered but no video URL was returned."
+          );
+
+        }
+
+
+        videoPlayer.src =
+          data.videoUrl;
+
+        videoLink.href =
+          data.videoUrl;
+
+        videoBox.style.display =
+          "block";
+
+
+        status.innerHTML =
+          '<span class="dot"></span> ✅ Video created successfully!';
+
+
+        return;
+
+      }
+
+
+      // =============================
+      // FAILED
+      // =============================
+
+      if (
+        currentStatus ===
+          "failed"
+      ) {
+
+        throw new Error(
+          "Creatomate video rendering failed."
+        );
+
+      }
+
+
+      // =============================
+      // STILL RENDERING
+      // =============================
+
+      status.innerHTML =
+        '<span class="dot"></span> 🎬 Rendering video...';
+
+
+      await sleep(5000);
+
+    } catch (error) {
+
+      throw error;
+
     }
-  </script>
+
+  }
+
+
+  throw new Error(
+    "Video rendering timed out."
+  );
+
+}
+
+
+
+// =====================================
+// WAIT
+// =====================================
+
+function sleep(ms) {
+
+  return new Promise(
+    resolve =>
+      setTimeout(
+        resolve,
+        ms
+      )
+  );
+
+}
+
+</script>
 
 </body>
+
 </html>
