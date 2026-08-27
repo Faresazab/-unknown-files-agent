@@ -96,11 +96,27 @@ ${body.prompt || "Create today's mystery short."}
         const result = await env.AI.run(
           "@cf/qwen/qwen3-30b-a3b-fp8",
           {
-            prompt: prompt,
-            max_tokens: 800,
-            temperature: 0.7,
-          }
-        );
+            const result = await env.AI.run(
+  "@cf/qwen/qwen3-30b-a3b-fp8",
+  {
+    messages: [
+      {
+        role: "system",
+        content:
+          "You are a professional YouTube Shorts writer. " +
+          "Do not reveal reasoning or analysis. " +
+          "Return only the requested final content."
+      },
+      {
+        role: "user",
+        content: prompt
+      }
+    ],
+    max_tokens: 1200,
+    temperature: 0.7,
+    top_p: 0.9
+  }
+);
 
         let story = "";
 
