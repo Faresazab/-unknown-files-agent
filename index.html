@@ -1,197 +1,123 @@
-export default {
-  async fetch(request, env) {
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Test</title>
 
-    const url = new URL(request.url);
-
-    const corsHeaders = {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type"
-    };
-
-    // =========================
-    // CORS
-    // =========================
-
-    if (request.method === "OPTIONS") {
-      return new Response(null, {
-        status: 204,
-        headers: corsHeaders
-      });
+  <style>
+    body {
+      margin: 0;
+      background: #08090d;
+      color: white;
+      font-family: Arial, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
-
-    // =========================
-    // HOME
-    // =========================
-
-    if (
-      url.pathname === "/" &&
-      request.method === "GET"
-    ) {
-
-      return new Response(
-        "AI TEST WORKER IS RUNNING",
-        {
-          status: 200,
-          headers: {
-            ...corsHeaders,
-            "Content-Type":
-              "text/plain; charset=utf-8"
-          }
-        }
-      );
-
+    .box {
+      width: 90%;
+      max-width: 500px;
+      background: #12141a;
+      padding: 25px;
+      border-radius: 20px;
+      text-align: center;
     }
 
+    button {
+      width: 100%;
+      padding: 18px;
+      border: 0;
+      border-radius: 14px;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 20px;
+    }
 
-    // =========================
-    // TEST QWEN3
-    // =========================
+    #result {
+      margin-top: 20px;
+      padding: 15px;
+      background: #08090d;
+      border-radius: 12px;
+      white-space: pre-wrap;
+      text-align: left;
+    }
+  </style>
+</head>
 
-    if (
-      url.pathname === "/api/test-ai" &&
-      request.method === "POST"
-    ) {
+<body>
+
+  <div class="box">
+
+    <h1>🤖 Workers AI Test</h1>
+
+    <p>Test Qwen3 connection</p>
+
+    <button onclick="testAI()" id="button">
+      TEST AI
+    </button>
+
+    <div id="result">
+      Waiting...
+    </div>
+
+  </div>
+
+  <script>
+    async function testAI() {
+
+      const button =
+        document.getElementById("button");
+
+      const result =
+        document.getElementById("result");
+
+      button.disabled = true;
+
+      result.textContent =
+        "⏳ Testing AI...";
 
       try {
 
-        const result = await env.AI.run(
-          "@cf/qwen/qwen3-30b-a3b-fp8",
-          {
-            messages: [
-              {
-                role: "system",
-                content:
-                  "You are a test assistant. " +
-                  "Reply with only: AI WORKS"
-              },
-              {
-                role: "user",
-                content:
-                  "Test the AI connection."
-              }
-            ],
+        const response =
+          await fetch("/api/test-ai", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            }
+          });
 
-            max_tokens: 20,
+        const data =
+          await response.json();
 
-            temperature: 0.1
-          }
-        );
-
-
-        // =========================
-        // GET RESPONSE
-        // =========================
-
-        let responseText = "";
-
-        if (
-          result &&
-          typeof result.response === "string"
-        ) {
-
-          responseText =
-            result.response;
-
-        } else if (
-          typeof result === "string"
-        ) {
-
-          responseText =
-            result;
-
-        } else {
-
-          responseText =
-            JSON.stringify(result);
-
+        if (!response.ok) {
+          throw new Error(
+            data.error || "AI test failed"
+          );
         }
 
-
-        // =========================
-        // RETURN
-        // =========================
-
-        return new Response(
-
-          JSON.stringify({
-            success: true,
-            message:
-              "Workers AI is working.",
-            result:
-              responseText
-          }),
-
-          {
-            status: 200,
-
-            headers: {
-              ...corsHeaders,
-              "Content-Type":
-                "application/json"
-            }
-          }
-
-        );
+        result.textContent =
+          "✅ AI WORKS\n\n" +
+          JSON.stringify(
+            data,
+            null,
+            2
+          );
 
       } catch (error) {
 
-        console.error(
-          "AI TEST ERROR:",
-          error
-        );
-
-
-        return new Response(
-
-          JSON.stringify({
-            success: false,
-            error:
-              error instanceof Error
-                ? error.message
-                : String(error)
-          }),
-
-          {
-            status: 500,
-
-            headers: {
-              ...corsHeaders,
-              "Content-Type":
-                "application/json"
-            }
-          }
-
-        );
+        result.textContent =
+          "❌ FAILED\n\n" +
+          error.message;
 
       }
 
+      button.disabled = false;
     }
+  </script>
 
-
-    // =========================
-    // NOT FOUND
-    // =========================
-
-    return new Response(
-
-      JSON.stringify({
-        success: false,
-        error: "Not found"
-      }),
-
-      {
-        status: 404,
-
-        headers: {
-          ...corsHeaders,
-          "Content-Type":
-            "application/json"
-        }
-      }
-
-    );
-
-  }
-};
+</body>
+</html>
