@@ -15,25 +15,14 @@ export default {
       });
     }
 
-    // =========================
-    // HOME
-    // =========================
-
     if (url.pathname === "/" && request.method === "GET") {
-      return new Response(
-        "AI Story Agent is running.",
-        {
-          headers: {
-            ...corsHeaders,
-            "Content-Type": "text/plain; charset=utf-8",
-          },
-        }
-      );
+      return new Response("AI Story Agent is running.", {
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "text/plain; charset=utf-8",
+        },
+      });
     }
-
-    // =========================
-    // CREATE STORY
-    // =========================
 
     if (
       url.pathname === "/api/create-story" &&
@@ -48,14 +37,18 @@ export default {
           body = {};
         }
 
-        const userPrompt =
-          typeof body.prompt === "string" && body.prompt.trim()
-            ? body.prompt.trim()
-            : `
-Create one original YouTube Shorts mystery story.
+        const prompt = `
+Create ONE original YouTube Shorts mystery story.
+
+IMPORTANT:
+Do NOT explain your reasoning.
+Do NOT describe your thinking process.
+Do NOT say "let me think".
+Do NOT provide analysis.
+Return ONLY the final answer.
 
 Genre:
-realistic mystery + psychological horror.
+Realistic mystery + psychological horror.
 
 Length:
 45-60 seconds.
@@ -66,66 +59,64 @@ English.
 Structure:
 Hook → Setup → Escalation → Twist → Open Ending.
 
+The first sentence must be extremely strong.
+
 The story must be completely original.
+Do not present fictional events as real.
 
-Do not claim that fictional events are real.
+Return EXACTLY this format:
 
-Make the first sentence extremely strong.
-
-Return:
 TITLE:
+[short catchy title]
+
 SCRIPT:
+[the complete 45-60 second narration]
+
 SCENES:
+1. [scene description]
+2. [scene description]
+3. [scene description]
+4. [scene description]
+5. [scene description]
+
 VISUAL PROMPTS:
+1. [AI image/video prompt]
+2. [AI image/video prompt]
+3. [AI image/video prompt]
+4. [AI image/video prompt]
+5. [AI image/video prompt]
+
 VOICE DIRECTION:
+[tone, pacing and emotion]
+
+USER REQUEST:
+${body.prompt || "Create today's mystery short."}
 `;
 
-        // =========================
-        // AI
-        // =========================
-
-        const aiResponse = await env.AI.run(
+        const result = await env.AI.run(
           "@cf/qwen/qwen3-30b-a3b-fp8",
           {
-            prompt: userPrompt,
-            max_tokens: 500,
+            prompt: prompt,
+            max_tokens: 800,
             temperature: 0.7,
           }
         );
 
-        // =========================
-        // GET GENERATED TEXT
-        // =========================
-
         let story = "";
 
-        if (typeof aiResponse === "string") {
-          story = aiResponse;
-        } else if (
-          aiResponse &&
-          typeof aiResponse.response === "string"
-        ) {
-          story = aiResponse.response;
-        } else if (
-          aiResponse &&
-          aiResponse.result &&
-          typeof aiResponse.result.response === "string"
-        ) {
-          story = aiResponse.result.response;
+        if (result && typeof result.response === "string") {
+          story = result.response;
+        } else if (typeof result === "string") {
+          story = result;
         }
 
         story = story.trim();
-
-        // =========================
-        // EMPTY RESPONSE
-        // =========================
 
         if (!story) {
           return new Response(
             JSON.stringify({
               success: false,
               error: "Qwen3 returned an empty response.",
-              debug: aiResponse ?? null,
             }),
             {
               status: 502,
@@ -137,9 +128,24 @@ VOICE DIRECTION:
           );
         }
 
-        // =========================
-        // SAVE TO KV
-        // =========================
+        // Remove accidental reasoning if the model includes it
+        const markers = [
+          "Final answer:",
+          "FINAL ANSWER:",
+          "Here is the final answer:",
+        ];
+
+        for (const marker of markers) {
+          const index = story.indexOf(marker);
+
+          if (index !== -1) {
+            story = story
+              .slice(index + marker.length)
+              .trim();
+
+            break;
+          }
+        }
 
         const id =
           Date.now().toString() +
@@ -148,7 +154,6 @@ VOICE DIRECTION:
 
         const storyData = {
           id,
-          prompt: userPrompt,
           story,
           createdAt: new Date().toISOString(),
         };
@@ -159,10 +164,6 @@ VOICE DIRECTION:
             JSON.stringify(storyData)
           );
         }
-
-        // =========================
-        // RESPONSE
-        // =========================
 
         return new Response(
           JSON.stringify({
@@ -181,12 +182,12 @@ VOICE DIRECTION:
         );
 
       } catch (error) {
-        console.error("CREATE STORY ERROR:", error);
+        console.error(error);
 
         return new Response(
           JSON.stringify({
             success: false,
-            error: "Failed to create story.",
+            error: "AI generation failed.",
             message:
               error instanceof Error
                 ? error.message
@@ -202,99 +203,11 @@ VOICE DIRECTION:
         );
       }
     }
-
-    // =========================
-    // STORIES
-    // =========================
-
-    if (
-      url.pathname === "/api/stories" &&
-      request.method === "GET"
-    ) {
-      try {
-        if (!env.STORIES) {
-          return new Response(
-            JSON.stringify({
-              success: false,
-              error: "STORIES KV binding is missing.",
-            }),
-            {
-              status: 500,
-              headers: {
-                ...corsHeaders,
-                "Content-Type": "application/json",
-              },
-            }
-          );
-        }
-
-        const list = await env.STORIES.list();
-
-        const stories = [];
-
-        for (const key of list.keys) {
-          const value = await env.STORIES.get(key.name);
-
-          if (value) {
-            try {
-              stories.push(JSON.parse(value));
-            } catch {
-              // Ignore invalid entries
-            }
-          }
-        }
-
-        stories.sort((a, b) => {
-          return String(b.createdAt || "").localeCompare(
-            String(a.createdAt || "")
-          );
-        });
-
-        return new Response(
-          JSON.stringify({
-            success: true,
-            stories,
-          }),
-          {
-            status: 200,
-            headers: {
-              ...corsHeaders,
-              "Content-Type": "application/json",
-            },
-          }
-        );
-
-      } catch (error) {
-        console.error("GET STORIES ERROR:", error);
-
-        return new Response(
-          JSON.stringify({
-            success: false,
-            error: "Failed to load stories.",
-            message:
-              error instanceof Error
-                ? error.message
-                : String(error),
-          }),
-          {
-            status: 500,
-            headers: {
-              ...corsHeaders,
-              "Content-Type": "application/json",
-            },
-          }
-        );
-      }
-    }
-
-    // =========================
-    // 404
-    // =========================
 
     return new Response(
       JSON.stringify({
         success: false,
-        error: "Not found.",
+        error: "Not found",
       }),
       {
         status: 404,
