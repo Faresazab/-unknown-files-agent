@@ -2,8 +2,12 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
   <meta name="theme-color" content="#08090d">
+
   <title>Unknown Files AI Manager</title>
 
   <style>
@@ -58,6 +62,7 @@
       font-weight: bold;
       margin: 10px 0 25px;
       cursor: pointer;
+      transition: transform 0.15s;
     }
 
     .create:active {
@@ -66,6 +71,7 @@
 
     .create:disabled {
       opacity: .5;
+      cursor: not-allowed;
     }
 
     .grid {
@@ -95,6 +101,7 @@
       color: #777;
       font-size: 13px;
       margin-top: 6px;
+      line-height: 1.4;
     }
 
     .status {
@@ -146,6 +153,43 @@
       line-height: 1.6;
       font-size: 14px;
     }
+
+    .video-button {
+      display: inline-block;
+      margin-top: 10px;
+      padding: 14px 20px;
+      background: white;
+      color: black;
+      text-decoration: none;
+      border-radius: 12px;
+      font-weight: bold;
+    }
+
+    .video-button:hover {
+      opacity: .9;
+    }
+
+    .progress {
+      margin-top: 15px;
+      height: 5px;
+      width: 100%;
+      background: #22252d;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      background: white;
+      transition: width 0.5s ease;
+    }
+
+    @media (max-width: 420px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
   </style>
 </head>
 
@@ -153,51 +197,119 @@
 
   <div class="app">
 
-    <div class="header">
-      <div class="logo">UNKNOWN FILES</div>
+    <!-- ========================= -->
+    <!-- HEADER -->
+    <!-- ========================= -->
 
-      <h1>AI Manager</h1>
+    <div class="header">
+
+      <div class="logo">
+        UNKNOWN FILES
+      </div>
+
+      <h1>
+        AI Manager
+      </h1>
 
       <div class="subtitle">
         Your autonomous YouTube Shorts studio.
       </div>
+
     </div>
+
+
+    <!-- ========================= -->
+    <!-- CREATE BUTTON -->
+    <!-- ========================= -->
 
     <button
       id="createButton"
       class="create"
-      onclick="createShort()"
+      onclick="createVideo()"
     >
-      🎬 Create Today's Short
+      🎬 Create Today's Video
     </button>
+
+
+    <!-- ========================= -->
+    <!-- DASHBOARD CARDS -->
+    <!-- ========================= -->
 
     <div class="grid">
 
       <div class="card">
-        <div class="icon">📚</div>
-        <h2>Story Library</h2>
-        <p>Stories created by the AI.</p>
+
+        <div class="icon">
+          📚
+        </div>
+
+        <h2>
+          Story Library
+        </h2>
+
+        <p>
+          Stories created by the AI.
+        </p>
+
       </div>
 
-      <div class="card">
-        <div class="icon">📊</div>
-        <h2>Analytics</h2>
-        <p>Track your channel.</p>
-      </div>
 
       <div class="card">
-        <div class="icon">🎬</div>
-        <h2>Videos</h2>
-        <p>Generated Shorts.</p>
+
+        <div class="icon">
+          📊
+        </div>
+
+        <h2>
+          Analytics
+        </h2>
+
+        <p>
+          Track your channel.
+        </p>
+
       </div>
 
+
       <div class="card">
-        <div class="icon">⚙️</div>
-        <h2>Settings</h2>
-        <p>Control your AI.</p>
+
+        <div class="icon">
+          🎬
+        </div>
+
+        <h2>
+          Videos
+        </h2>
+
+        <p>
+          Generated Shorts.
+        </p>
+
+      </div>
+
+
+      <div class="card">
+
+        <div class="icon">
+          ⚙️
+        </div>
+
+        <h2>
+          Settings
+        </h2>
+
+        <p>
+          Control your AI.
+        </p>
+
       </div>
 
     </div>
+
+
+    <!-- ========================= -->
+    <!-- STATUS -->
+    <!-- ========================= -->
 
     <div class="status">
 
@@ -206,137 +318,539 @@
       </div>
 
       <div id="statusText">
+
         <span class="dot"></span>
+
         Waiting for command...
+
+      </div>
+
+      <div
+        id="progressContainer"
+        class="progress"
+        style="display:none;"
+      >
+
+        <div
+          id="progressBar"
+          class="progress-bar"
+        ></div>
+
       </div>
 
     </div>
 
-    <div id="storyBox" class="story">
 
-      <h2>📝 Generated Story</h2>
+    <!-- ========================= -->
+    <!-- VIDEO RESULT -->
+    <!-- ========================= -->
+
+    <div
+      id="storyBox"
+      class="story"
+    >
+
+      <h2>
+        🎬 Generated Short
+      </h2>
 
       <pre id="storyText"></pre>
+
+      <div id="videoResult"></div>
 
     </div>
 
   </div>
 
+
 <script>
 
-async function createShort() {
+  // ==========================================
+  // CREATE TODAY'S VIDEO
+  // ==========================================
 
-  const button = document.getElementById("createButton");
-  const status = document.getElementById("statusText");
-  const storyBox = document.getElementById("storyBox");
-  const storyText = document.getElementById("storyText");
+  async function createVideo() {
 
-  button.disabled = true;
+    const button =
+      document.getElementById("createButton");
 
-  storyBox.style.display = "none";
+    const status =
+      document.getElementById("statusText");
 
-  status.innerHTML =
-    '<span class="dot"></span> 🤖 Connecting to AI Agent...';
+    const storyBox =
+      document.getElementById("storyBox");
 
-  try {
+    const storyText =
+      document.getElementById("storyText");
 
-    const response = await fetch(
-      "/api/create-story",
-      {
-        method: "POST",
+    const videoResult =
+      document.getElementById("videoResult");
 
-        headers: {
-          "Content-Type": "application/json"
-        },
+    const progressContainer =
+      document.getElementById("progressContainer");
 
-        body: JSON.stringify({
+    const progressBar =
+      document.getElementById("progressBar");
 
-          prompt: `
-Create one original YouTube Shorts mystery story.
+
+    // Disable button
+
+    button.disabled = true;
+
+
+    // Hide old result
+
+    storyBox.style.display = "none";
+
+    videoResult.innerHTML = "";
+
+    progressContainer.style.display = "block";
+
+    progressBar.style.width = "5%";
+
+
+    try {
+
+      // ======================================
+      // STEP 1
+      // ======================================
+
+      status.innerHTML =
+        '<span class="dot"></span>' +
+        ' 🧠 Creating mystery story...';
+
+      progressBar.style.width = "10%";
+
+
+      const response =
+        await fetch(
+          "/api/create-video",
+          {
+            method: "POST",
+
+            headers: {
+              "Content-Type": "application/json"
+            },
+
+            body: JSON.stringify({
+
+              prompt: `
+Create today's YouTube Shorts mystery video.
 
 Genre:
 realistic mystery + psychological horror.
 
-Length:
-45-60 seconds.
+Make it cinematic, suspenseful,
+original and highly engaging.
 
-Language:
-English.
+The story must be suitable for
+a 45-60 second YouTube Short.
+`
 
-Structure:
-Hook → Setup → Escalation → Twist → Open Ending.
+            })
+          }
+        );
 
-The story must be completely original.
 
-Do not claim that fictional events are real.
+      // ======================================
+      // READ RESPONSE
+      // ======================================
 
-Make the first sentence extremely strong.
+      let data;
 
-Return:
+      try {
 
-TITLE:
-SCRIPT:
-SCENES:
-VISUAL PROMPTS:
-VOICE DIRECTION:
-          `
+        data =
+          await response.json();
 
-        })
+      } catch {
+
+        throw new Error(
+          "Server returned an invalid response."
+        );
 
       }
-    );
 
-    const data = await response.json();
 
-    if (!response.ok) {
+      if (!response.ok) {
 
-      throw new Error(
-        data.error || "AI Agent error"
+        throw new Error(
+          data.error ||
+          data.message ||
+          "Video generation failed."
+        );
+
+      }
+
+
+      if (!data.renderId) {
+
+        throw new Error(
+          "No video render ID was returned."
+        );
+
+      }
+
+
+      const renderId =
+        data.renderId;
+
+
+      // ======================================
+      // STEP 2
+      // ======================================
+
+      status.innerHTML =
+        '<span class="dot"></span>' +
+        ' 🖼️ Generating 5 cinematic scenes...';
+
+      progressBar.style.width = "30%";
+
+
+      // ======================================
+      // WAIT FOR VIDEO
+      // ======================================
+
+      await checkVideoStatus(
+
+        renderId,
+
+        status,
+
+        storyBox,
+
+        storyText,
+
+        videoResult,
+
+        progressBar
+
       );
+
+
+    } catch (error) {
+
+      console.error(
+        "VIDEO ERROR:",
+        error
+      );
+
+
+      status.innerHTML =
+        '<span class="dot"></span>' +
+        ' ❌ ' +
+        escapeHtml(
+          error.message
+        );
+
+
+      progressBar.style.width = "0%";
+
+      progressContainer.style.display =
+        "none";
+
+
+    } finally {
+
+      button.disabled = false;
 
     }
 
-    let result = data.story;
+  }
 
-    if (
-      result &&
-      typeof result === "object"
+
+  // ==========================================
+  // CHECK VIDEO STATUS
+  // ==========================================
+
+  async function checkVideoStatus(
+
+    renderId,
+
+    status,
+
+    storyBox,
+
+    storyText,
+
+    videoResult,
+
+    progressBar
+
+  ) {
+
+    const maxAttempts = 60;
+
+    let attempts = 0;
+
+
+    while (
+      attempts < maxAttempts
     ) {
 
-      result = JSON.stringify(
-        result,
-        null,
-        2
+      attempts++;
+
+
+      // Wait 5 seconds
+
+      await new Promise(
+        resolve =>
+          setTimeout(
+            resolve,
+            5000
+          )
       );
+
+
+      let response;
+
+      try {
+
+        response =
+          await fetch(
+            "/api/video-status?id=" +
+            encodeURIComponent(
+              renderId
+            )
+          );
+
+      } catch {
+
+        throw new Error(
+          "Could not connect to video server."
+        );
+
+      }
+
+
+      let data;
+
+      try {
+
+        data =
+          await response.json();
+
+      } catch {
+
+        throw new Error(
+          "Invalid video status response."
+        );
+
+      }
+
+
+      if (!response.ok) {
+
+        throw new Error(
+          data.error ||
+          "Could not check video status."
+        );
+
+      }
+
+
+      // ======================================
+      // RENDER SUCCESS
+      // ======================================
+
+      if (
+        data.status === "succeeded"
+      ) {
+
+        progressBar.style.width =
+          "100%";
+
+
+        status.innerHTML =
+          '<span class="dot"></span>' +
+          ' ✅ Video ready!';
+
+
+        storyBox.style.display =
+          "block";
+
+
+        storyText.textContent =
+          "Your YouTube Short has been generated successfully.";
+
+
+        // ====================================
+        // VIDEO LINK
+        // ====================================
+
+        if (data.videoUrl) {
+
+          videoResult.innerHTML = `
+
+            <a
+              class="video-button"
+              href="${escapeAttribute(
+                data.videoUrl
+              )}"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              ▶️ Open Video
+            </a>
+
+          `;
+
+        } else {
+
+          videoResult.innerHTML = `
+
+            <p
+              style="
+                color:#888;
+                margin-top:15px;
+              "
+            >
+              Video rendered successfully,
+              but no video URL was returned.
+            </p>
+
+          `;
+
+        }
+
+
+        return;
+
+      }
+
+
+      // ======================================
+      // RENDER FAILED
+      // ======================================
+
+      if (
+        data.status === "failed"
+      ) {
+
+        throw new Error(
+          "Video rendering failed."
+        );
+
+      }
+
+
+      // ======================================
+      // PROGRESS
+      // ======================================
+
+      const estimatedProgress =
+        Math.min(
+          95,
+          35 +
+          Math.floor(
+            attempts * 1.2
+          )
+        );
+
+
+      progressBar.style.width =
+        estimatedProgress + "%";
+
+
+      if (
+        attempts < 5
+      ) {
+
+        status.innerHTML =
+          '<span class="dot"></span>' +
+          ' 🖼️ Generating images...';
+
+      } else if (
+        attempts < 12
+      ) {
+
+        status.innerHTML =
+          '<span class="dot"></span>' +
+          ' 🎙️ Creating voice-over...';
+
+      } else {
+
+        status.innerHTML =
+          '<span class="dot"></span>' +
+          ' 🎞️ Rendering final video...';
+
+      }
 
     }
 
-    storyText.textContent = result;
 
-    storyBox.style.display = "block";
-
-    status.innerHTML =
-      '<span class="dot"></span> ✅ Story created successfully!';
+    throw new Error(
+      "Video is taking too long to render."
+    );
 
   }
 
-  catch (error) {
 
-    status.innerHTML =
-      '<span class="dot"></span> ❌ ' +
-      error.message;
+  // ==========================================
+  // BASIC HTML ESCAPING
+  // ==========================================
 
-    console.error(error);
+  function escapeHtml(
+    text
+  ) {
+
+    return String(text)
+
+      .replace(
+        /&/g,
+        "&amp;"
+      )
+
+      .replace(
+        /</g,
+        "&lt;"
+      )
+
+      .replace(
+        />/g,
+        "&gt;"
+      )
+
+      .replace(
+        /"/g,
+        "&quot;"
+      )
+
+      .replace(
+        /'/g,
+        "&#039;"
+      );
 
   }
 
-  finally {
 
-    button.disabled = false;
+  function escapeAttribute(
+    text
+  ) {
+
+    return String(text)
+
+      .replace(
+        /&/g,
+        "&amp;"
+      )
+
+      .replace(
+        /"/g,
+        "&quot;"
+      )
+
+      .replace(
+        /</g,
+        "&lt;"
+      )
+
+      .replace(
+        />/g,
+        "&gt;"
+      );
 
   }
-
-}
 
 </script>
 
