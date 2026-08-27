@@ -1,858 +1,197 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
-  >
-  <meta name="theme-color" content="#08090d">
+export default {
+  async fetch(request, env) {
 
-  <title>Unknown Files AI Manager</title>
+    const url = new URL(request.url);
 
-  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: Arial, sans-serif;
+    const corsHeaders = {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type"
+    };
+
+    // =========================
+    // CORS
+    // =========================
+
+    if (request.method === "OPTIONS") {
+      return new Response(null, {
+        status: 204,
+        headers: corsHeaders
+      });
     }
 
-    body {
-      background: #08090d;
-      color: white;
-      min-height: 100vh;
+
+    // =========================
+    // HOME
+    // =========================
+
+    if (
+      url.pathname === "/" &&
+      request.method === "GET"
+    ) {
+
+      return new Response(
+        "AI TEST WORKER IS RUNNING",
+        {
+          status: 200,
+          headers: {
+            ...corsHeaders,
+            "Content-Type":
+              "text/plain; charset=utf-8"
+          }
+        }
+      );
+
     }
 
-    .app {
-      max-width: 600px;
-      margin: auto;
-      padding: 25px 18px;
-    }
 
-    .header {
-      padding: 20px 0 30px;
-    }
+    // =========================
+    // TEST QWEN3
+    // =========================
 
-    .logo {
-      font-size: 13px;
-      letter-spacing: 4px;
-      color: #888;
-    }
+    if (
+      url.pathname === "/api/test-ai" &&
+      request.method === "POST"
+    ) {
 
-    h1 {
-      margin-top: 8px;
-      font-size: 30px;
-    }
+      try {
 
-    .subtitle {
-      color: #777;
-      margin-top: 8px;
-      line-height: 1.5;
-    }
-
-    .create {
-      width: 100%;
-      padding: 22px;
-      border: 0;
-      border-radius: 18px;
-      background: white;
-      color: black;
-      font-size: 18px;
-      font-weight: bold;
-      margin: 10px 0 25px;
-      cursor: pointer;
-      transition: transform 0.15s;
-    }
-
-    .create:active {
-      transform: scale(.98);
-    }
-
-    .create:disabled {
-      opacity: .5;
-      cursor: not-allowed;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
-
-    .card {
-      background: #12141a;
-      border: 1px solid #22252d;
-      border-radius: 18px;
-      padding: 20px;
-      min-height: 130px;
-    }
-
-    .icon {
-      font-size: 28px;
-      margin-bottom: 15px;
-    }
-
-    .card h2 {
-      font-size: 16px;
-    }
-
-    .card p {
-      color: #777;
-      font-size: 13px;
-      margin-top: 6px;
-      line-height: 1.4;
-    }
-
-    .status {
-      margin-top: 25px;
-      padding: 18px;
-      border-radius: 18px;
-      background: #101217;
-      border: 1px solid #22252d;
-    }
-
-    .status-title {
-      color: #888;
-      font-size: 12px;
-      letter-spacing: 2px;
-    }
-
-    #statusText {
-      margin-top: 10px;
-      font-size: 15px;
-      line-height: 1.5;
-    }
-
-    .dot {
-      display: inline-block;
-      width: 8px;
-      height: 8px;
-      background: #35d07f;
-      border-radius: 50%;
-      margin-right: 8px;
-    }
-
-    .story {
-      display: none;
-      margin-top: 20px;
-      padding: 20px;
-      background: #12141a;
-      border: 1px solid #22252d;
-      border-radius: 18px;
-    }
-
-    .story h2 {
-      font-size: 20px;
-      margin-bottom: 15px;
-    }
-
-    .story pre {
-      white-space: pre-wrap;
-      color: #ccc;
-      line-height: 1.6;
-      font-size: 14px;
-    }
-
-    .video-button {
-      display: inline-block;
-      margin-top: 10px;
-      padding: 14px 20px;
-      background: white;
-      color: black;
-      text-decoration: none;
-      border-radius: 12px;
-      font-weight: bold;
-    }
-
-    .video-button:hover {
-      opacity: .9;
-    }
-
-    .progress {
-      margin-top: 15px;
-      height: 5px;
-      width: 100%;
-      background: #22252d;
-      border-radius: 10px;
-      overflow: hidden;
-    }
-
-    .progress-bar {
-      height: 100%;
-      width: 0%;
-      background: white;
-      transition: width 0.5s ease;
-    }
-
-    @media (max-width: 420px) {
-      .grid {
-        grid-template-columns: 1fr;
-      }
-    }
-  </style>
-</head>
-
-<body>
-
-  <div class="app">
-
-    <!-- ========================= -->
-    <!-- HEADER -->
-    <!-- ========================= -->
-
-    <div class="header">
-
-      <div class="logo">
-        UNKNOWN FILES
-      </div>
-
-      <h1>
-        AI Manager
-      </h1>
-
-      <div class="subtitle">
-        Your autonomous YouTube Shorts studio.
-      </div>
-
-    </div>
-
-
-    <!-- ========================= -->
-    <!-- CREATE BUTTON -->
-    <!-- ========================= -->
-
-    <button
-      id="createButton"
-      class="create"
-      onclick="createVideo()"
-    >
-      🎬 Create Today's Video
-    </button>
-
-
-    <!-- ========================= -->
-    <!-- DASHBOARD CARDS -->
-    <!-- ========================= -->
-
-    <div class="grid">
-
-      <div class="card">
-
-        <div class="icon">
-          📚
-        </div>
-
-        <h2>
-          Story Library
-        </h2>
-
-        <p>
-          Stories created by the AI.
-        </p>
-
-      </div>
-
-
-      <div class="card">
-
-        <div class="icon">
-          📊
-        </div>
-
-        <h2>
-          Analytics
-        </h2>
-
-        <p>
-          Track your channel.
-        </p>
-
-      </div>
-
-
-      <div class="card">
-
-        <div class="icon">
-          🎬
-        </div>
-
-        <h2>
-          Videos
-        </h2>
-
-        <p>
-          Generated Shorts.
-        </p>
-
-      </div>
-
-
-      <div class="card">
-
-        <div class="icon">
-          ⚙️
-        </div>
-
-        <h2>
-          Settings
-        </h2>
-
-        <p>
-          Control your AI.
-        </p>
-
-      </div>
-
-    </div>
-
-
-    <!-- ========================= -->
-    <!-- STATUS -->
-    <!-- ========================= -->
-
-    <div class="status">
-
-      <div class="status-title">
-        AGENT STATUS
-      </div>
-
-      <div id="statusText">
-
-        <span class="dot"></span>
-
-        Waiting for command...
-
-      </div>
-
-      <div
-        id="progressContainer"
-        class="progress"
-        style="display:none;"
-      >
-
-        <div
-          id="progressBar"
-          class="progress-bar"
-        ></div>
-
-      </div>
-
-    </div>
-
-
-    <!-- ========================= -->
-    <!-- VIDEO RESULT -->
-    <!-- ========================= -->
-
-    <div
-      id="storyBox"
-      class="story"
-    >
-
-      <h2>
-        🎬 Generated Short
-      </h2>
-
-      <pre id="storyText"></pre>
-
-      <div id="videoResult"></div>
-
-    </div>
-
-  </div>
-
-
-<script>
-
-  // ==========================================
-  // CREATE TODAY'S VIDEO
-  // ==========================================
-
-  async function createVideo() {
-
-    const button =
-      document.getElementById("createButton");
-
-    const status =
-      document.getElementById("statusText");
-
-    const storyBox =
-      document.getElementById("storyBox");
-
-    const storyText =
-      document.getElementById("storyText");
-
-    const videoResult =
-      document.getElementById("videoResult");
-
-    const progressContainer =
-      document.getElementById("progressContainer");
-
-    const progressBar =
-      document.getElementById("progressBar");
-
-
-    // Disable button
-
-    button.disabled = true;
-
-
-    // Hide old result
-
-    storyBox.style.display = "none";
-
-    videoResult.innerHTML = "";
-
-    progressContainer.style.display = "block";
-
-    progressBar.style.width = "5%";
-
-
-    try {
-
-      // ======================================
-      // STEP 1
-      // ======================================
-
-      status.innerHTML =
-        '<span class="dot"></span>' +
-        ' 🧠 Creating mystery story...';
-
-      progressBar.style.width = "10%";
-
-
-      const response =
-        await fetch(
-          "/api/create-video",
+        const result = await env.AI.run(
+          "@cf/qwen/qwen3-30b-a3b-fp8",
           {
-            method: "POST",
+            messages: [
+              {
+                role: "system",
+                content:
+                  "You are a test assistant. " +
+                  "Reply with only: AI WORKS"
+              },
+              {
+                role: "user",
+                content:
+                  "Test the AI connection."
+              }
+            ],
 
-            headers: {
-              "Content-Type": "application/json"
-            },
+            max_tokens: 20,
 
-            body: JSON.stringify({
-
-              prompt: `
-Create today's YouTube Shorts mystery video.
-
-Genre:
-realistic mystery + psychological horror.
-
-Make it cinematic, suspenseful,
-original and highly engaging.
-
-The story must be suitable for
-a 45-60 second YouTube Short.
-`
-
-            })
+            temperature: 0.1
           }
         );
 
 
-      // ======================================
-      // READ RESPONSE
-      // ======================================
+        // =========================
+        // GET RESPONSE
+        // =========================
 
-      let data;
+        let responseText = "";
 
-      try {
+        if (
+          result &&
+          typeof result.response === "string"
+        ) {
 
-        data =
-          await response.json();
+          responseText =
+            result.response;
 
-      } catch {
+        } else if (
+          typeof result === "string"
+        ) {
 
-        throw new Error(
-          "Server returned an invalid response."
-        );
-
-      }
-
-
-      if (!response.ok) {
-
-        throw new Error(
-          data.error ||
-          data.message ||
-          "Video generation failed."
-        );
-
-      }
-
-
-      if (!data.renderId) {
-
-        throw new Error(
-          "No video render ID was returned."
-        );
-
-      }
-
-
-      const renderId =
-        data.renderId;
-
-
-      // ======================================
-      // STEP 2
-      // ======================================
-
-      status.innerHTML =
-        '<span class="dot"></span>' +
-        ' 🖼️ Generating 5 cinematic scenes...';
-
-      progressBar.style.width = "30%";
-
-
-      // ======================================
-      // WAIT FOR VIDEO
-      // ======================================
-
-      await checkVideoStatus(
-
-        renderId,
-
-        status,
-
-        storyBox,
-
-        storyText,
-
-        videoResult,
-
-        progressBar
-
-      );
-
-
-    } catch (error) {
-
-      console.error(
-        "VIDEO ERROR:",
-        error
-      );
-
-
-      status.innerHTML =
-        '<span class="dot"></span>' +
-        ' ❌ ' +
-        escapeHtml(
-          error.message
-        );
-
-
-      progressBar.style.width = "0%";
-
-      progressContainer.style.display =
-        "none";
-
-
-    } finally {
-
-      button.disabled = false;
-
-    }
-
-  }
-
-
-  // ==========================================
-  // CHECK VIDEO STATUS
-  // ==========================================
-
-  async function checkVideoStatus(
-
-    renderId,
-
-    status,
-
-    storyBox,
-
-    storyText,
-
-    videoResult,
-
-    progressBar
-
-  ) {
-
-    const maxAttempts = 60;
-
-    let attempts = 0;
-
-
-    while (
-      attempts < maxAttempts
-    ) {
-
-      attempts++;
-
-
-      // Wait 5 seconds
-
-      await new Promise(
-        resolve =>
-          setTimeout(
-            resolve,
-            5000
-          )
-      );
-
-
-      let response;
-
-      try {
-
-        response =
-          await fetch(
-            "/api/video-status?id=" +
-            encodeURIComponent(
-              renderId
-            )
-          );
-
-      } catch {
-
-        throw new Error(
-          "Could not connect to video server."
-        );
-
-      }
-
-
-      let data;
-
-      try {
-
-        data =
-          await response.json();
-
-      } catch {
-
-        throw new Error(
-          "Invalid video status response."
-        );
-
-      }
-
-
-      if (!response.ok) {
-
-        throw new Error(
-          data.error ||
-          "Could not check video status."
-        );
-
-      }
-
-
-      // ======================================
-      // RENDER SUCCESS
-      // ======================================
-
-      if (
-        data.status === "succeeded"
-      ) {
-
-        progressBar.style.width =
-          "100%";
-
-
-        status.innerHTML =
-          '<span class="dot"></span>' +
-          ' ✅ Video ready!';
-
-
-        storyBox.style.display =
-          "block";
-
-
-        storyText.textContent =
-          "Your YouTube Short has been generated successfully.";
-
-
-        // ====================================
-        // VIDEO LINK
-        // ====================================
-
-        if (data.videoUrl) {
-
-          videoResult.innerHTML = `
-
-            <a
-              class="video-button"
-              href="${escapeAttribute(
-                data.videoUrl
-              )}"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              ▶️ Open Video
-            </a>
-
-          `;
+          responseText =
+            result;
 
         } else {
 
-          videoResult.innerHTML = `
-
-            <p
-              style="
-                color:#888;
-                margin-top:15px;
-              "
-            >
-              Video rendered successfully,
-              but no video URL was returned.
-            </p>
-
-          `;
+          responseText =
+            JSON.stringify(result);
 
         }
 
 
-        return;
+        // =========================
+        // RETURN
+        // =========================
 
-      }
+        return new Response(
 
+          JSON.stringify({
+            success: true,
+            message:
+              "Workers AI is working.",
+            result:
+              responseText
+          }),
 
-      // ======================================
-      // RENDER FAILED
-      // ======================================
+          {
+            status: 200,
 
-      if (
-        data.status === "failed"
-      ) {
+            headers: {
+              ...corsHeaders,
+              "Content-Type":
+                "application/json"
+            }
+          }
 
-        throw new Error(
-          "Video rendering failed."
         );
 
-      }
+      } catch (error) {
 
-
-      // ======================================
-      // PROGRESS
-      // ======================================
-
-      const estimatedProgress =
-        Math.min(
-          95,
-          35 +
-          Math.floor(
-            attempts * 1.2
-          )
+        console.error(
+          "AI TEST ERROR:",
+          error
         );
 
 
-      progressBar.style.width =
-        estimatedProgress + "%";
+        return new Response(
 
+          JSON.stringify({
+            success: false,
+            error:
+              error instanceof Error
+                ? error.message
+                : String(error)
+          }),
 
-      if (
-        attempts < 5
-      ) {
+          {
+            status: 500,
 
-        status.innerHTML =
-          '<span class="dot"></span>' +
-          ' 🖼️ Generating images...';
+            headers: {
+              ...corsHeaders,
+              "Content-Type":
+                "application/json"
+            }
+          }
 
-      } else if (
-        attempts < 12
-      ) {
-
-        status.innerHTML =
-          '<span class="dot"></span>' +
-          ' 🎙️ Creating voice-over...';
-
-      } else {
-
-        status.innerHTML =
-          '<span class="dot"></span>' +
-          ' 🎞️ Rendering final video...';
+        );
 
       }
 
     }
 
 
-    throw new Error(
-      "Video is taking too long to render."
+    // =========================
+    // NOT FOUND
+    // =========================
+
+    return new Response(
+
+      JSON.stringify({
+        success: false,
+        error: "Not found"
+      }),
+
+      {
+        status: 404,
+
+        headers: {
+          ...corsHeaders,
+          "Content-Type":
+            "application/json"
+        }
+      }
+
     );
 
   }
-
-
-  // ==========================================
-  // BASIC HTML ESCAPING
-  // ==========================================
-
-  function escapeHtml(
-    text
-  ) {
-
-    return String(text)
-
-      .replace(
-        /&/g,
-        "&amp;"
-      )
-
-      .replace(
-        /</g,
-        "&lt;"
-      )
-
-      .replace(
-        />/g,
-        "&gt;"
-      )
-
-      .replace(
-        /"/g,
-        "&quot;"
-      )
-
-      .replace(
-        /'/g,
-        "&#039;"
-      );
-
-  }
-
-
-  function escapeAttribute(
-    text
-  ) {
-
-    return String(text)
-
-      .replace(
-        /&/g,
-        "&amp;"
-      )
-
-      .replace(
-        /"/g,
-        "&quot;"
-      )
-
-      .replace(
-        /</g,
-        "&lt;"
-      )
-
-      .replace(
-        />/g,
-        "&gt;"
-      );
-
-  }
-
-</script>
-
-</body>
-</html>
+};
