@@ -1,19 +1,57 @@
 export default {
   async fetch(request, env) {
-
     const url = new URL(request.url);
 
-    // AI STORY API
+    const corsHeaders = {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type",
+    };
+
+    if (request.method === "OPTIONS") {
+      return new Response(null, {
+        status: 204,
+        headers: corsHeaders,
+      });
+    }
+
+    // =========================
+    // HOME
+    // =========================
+
+    if (url.pathname === "/" && request.method === "GET") {
+      return new Response(
+        "AI Story Agent is running.",
+        {
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "text/plain; charset=utf-8",
+          },
+        }
+      );
+    }
+
+    // =========================
+    // CREATE STORY
+    // =========================
+
     if (
       url.pathname === "/api/create-story" &&
       request.method === "POST"
     ) {
-
       try {
+        let body = {};
 
-        const body = await request.json();
+        try {
+          body = await request.json();
+        } catch {
+          body = {};
+        }
 
-        const prompt = body.prompt || `
+        const userPrompt =
+          typeof body.prompt === "string" && body.prompt.trim()
+            ? body.prompt.trim()
+            : `
 Create one original YouTube Shorts mystery story.
 
 Genre:
@@ -30,7 +68,9 @@ Hook → Setup → Escalation → Twist → Open Ending.
 
 The story must be completely original.
 
-Do not claim fictional events are real.
+Do not claim that fictional events are real.
+
+Make the first sentence extremely strong.
 
 Return:
 TITLE:
@@ -40,67 +80,229 @@ VISUAL PROMPTS:
 VOICE DIRECTION:
 `;
 
-        const result = await env.AI.run(
-          "@cf/meta/llama-3.1-8b-instruct",
+        // =========================
+        // AI
+        // =========================
+
+        const aiResponse = await env.AI.run(
+          "@cf/qwen/qwen3-30b-a3b-fp8",
           {
-            messages: [
-              {
-                role: "system",
-                content:
-                  "You are the Story Agent for UNKNOWN FILES, a YouTube Shorts channel."
-              },
-              {
-                role: "user",
-                content: prompt
-              }
-            ]
+            prompt: userPrompt,
+            max_tokens: 500,
+            temperature: 0.7,
           }
         );
+
+        // =========================
+        // GET GENERATED TEXT
+        // =========================
+
+        let story = "";
+
+        if (typeof aiResponse === "string") {
+          story = aiResponse;
+        } else if (
+          aiResponse &&
+          typeof aiResponse.response === "string"
+        ) {
+          story = aiResponse.response;
+        } else if (
+          aiResponse &&
+          aiResponse.result &&
+          typeof aiResponse.result.response === "string"
+        ) {
+          story = aiResponse.result.response;
+        }
+
+        story = story.trim();
+
+        // =========================
+        // EMPTY RESPONSE
+        // =========================
+
+        if (!story) {
+          return new Response(
+            JSON.stringify({
+              success: false,
+              error: "Qwen3 returned an empty response.",
+              debug: aiResponse ?? null,
+            }),
+            {
+              status: 502,
+              headers: {
+                ...corsHeaders,
+                "Content-Type": "application/json",
+              },
+            }
+          );
+        }
+
+        // =========================
+        // SAVE TO KV
+        // =========================
+
+        const id =
+          Date.now().toString() +
+          "-" +
+          Math.random().toString(36).slice(2, 8);
+
+        const storyData = {
+          id,
+          prompt: userPrompt,
+          story,
+          createdAt: new Date().toISOString(),
+        };
+
+        if (env.STORIES) {
+          await env.STORIES.put(
+            id,
+            JSON.stringify(storyData)
+          );
+        }
+
+        // =========================
+        // RESPONSE
+        // =========================
 
         return new Response(
           JSON.stringify({
             success: true,
-            result: result
+            story,
+            id,
+            createdAt: storyData.createdAt,
           }),
           {
             status: 200,
             headers: {
+              ...corsHeaders,
               "Content-Type": "application/json",
-              "Access-Control-Allow-Origin": "*"
-            }
+            },
           }
         );
 
       } catch (error) {
+        console.error("CREATE STORY ERROR:", error);
 
         return new Response(
           JSON.stringify({
             success: false,
-            error: error.message
+            error: "Failed to create story.",
+            message:
+              error instanceof Error
+                ? error.message
+                : String(error),
           }),
           {
             status: 500,
             headers: {
+              ...corsHeaders,
               "Content-Type": "application/json",
-              "Access-Control-Allow-Origin": "*"
-            }
+            },
           }
         );
-
       }
     }
 
-    // Simple response for normal browser visits
-    return new Response(
-      "UNKNOWN FILES AI Agent is online. Use POST /api/create-story to generate a story.",
-      {
-        status: 200,
-        headers: {
-          "Content-Type": "text/plain",
-          "Access-Control-Allow-Origin": "*"
+    // =========================
+    // STORIES
+    // =========================
+
+    if (
+      url.pathname === "/api/stories" &&
+      request.method === "GET"
+    ) {
+      try {
+        if (!env.STORIES) {
+          return new Response(
+            JSON.stringify({
+              success: false,
+              error: "STORIES KV binding is missing.",
+            }),
+            {
+              status: 500,
+              headers: {
+                ...corsHeaders,
+                "Content-Type": "application/json",
+              },
+            }
+          );
         }
+
+        const list = await env.STORIES.list();
+
+        const stories = [];
+
+        for (const key of list.keys) {
+          const value = await env.STORIES.get(key.name);
+
+          if (value) {
+            try {
+              stories.push(JSON.parse(value));
+            } catch {
+              // Ignore invalid entries
+            }
+          }
+        }
+
+        stories.sort((a, b) => {
+          return String(b.createdAt || "").localeCompare(
+            String(a.createdAt || "")
+          );
+        });
+
+        return new Response(
+          JSON.stringify({
+            success: true,
+            stories,
+          }),
+          {
+            status: 200,
+            headers: {
+              ...corsHeaders,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+      } catch (error) {
+        console.error("GET STORIES ERROR:", error);
+
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: "Failed to load stories.",
+            message:
+              error instanceof Error
+                ? error.message
+                : String(error),
+          }),
+          {
+            status: 500,
+            headers: {
+              ...corsHeaders,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+      }
+    }
+
+    // =========================
+    // 404
+    // =========================
+
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: "Not found.",
+      }),
+      {
+        status: 404,
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "application/json",
+        },
       }
     );
-
-  }
+  },
 };
