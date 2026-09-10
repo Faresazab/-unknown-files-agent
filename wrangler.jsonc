@@ -1,7 +1,7 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
 
-  "name": "unknown-files-agent1",
+  "name": "unknown-files-agent",
 
   "main": "worker.js",
 
