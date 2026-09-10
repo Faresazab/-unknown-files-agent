@@ -1,0 +1,12 @@
+{
+  "name": "unknown-files-agent",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@cloudflare/containers": "^0.0.28"
+  },
+  "devDependencies": {
+    "wrangler": "^4.34.0"
+  }
+}
