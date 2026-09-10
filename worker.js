@@ -17,16 +17,21 @@ var worker_default = {
       });
     }
 
+
     // ==========================================
     // HOME
     // ==========================================
 
-    if (url.pathname === "/" && request.method === "GET") {
+    if (
+      url.pathname === "/" &&
+      request.method === "GET"
+    ) {
 
       return json({
         status: "ONLINE",
         agent: "UNKNOWN FILES",
-        version: "3.0",
+        version: "4.0",
+        image_model: "@cf/black-forest-labs/flux-1-schnell",
         endpoints: [
           "POST /api/create-story",
           "POST /api/create-assets",
@@ -82,13 +87,11 @@ REQUIREMENTS:
 - No explanations
 - No bullet points
 
-IMPORTANT:
-
 Return ONLY the story.
 `;
 
 
-        const result = await runWithRetry(
+        const result = await aiRun(
           env,
           "@cf/qwen/qwen3-30b-a3b-fp8",
           {
@@ -100,8 +103,7 @@ Return ONLY the story.
             ],
             max_tokens: 500,
             temperature: 0.7
-          },
-          3
+          }
         );
 
 
@@ -142,7 +144,7 @@ Return ONLY the story.
 
 
     // ==========================================
-    // CREATE ASSETS
+    // CREATE ASSETS / GENERATE SHORT
     // ==========================================
 
     if (
@@ -161,7 +163,7 @@ Return ONLY the story.
 
 
         // ======================================
-        // IF NO STORY → CREATE ONE
+        // 1. CREATE STORY IF NEEDED
         // ======================================
 
         if (!story) {
@@ -201,7 +203,7 @@ Return ONLY the story.
 `;
 
 
-          const storyResult = await runWithRetry(
+          const storyResult = await aiRun(
             env,
             "@cf/qwen/qwen3-30b-a3b-fp8",
             {
@@ -213,8 +215,7 @@ Return ONLY the story.
               ],
               max_tokens: 500,
               temperature: 0.7
-            },
-            3
+            }
           );
 
 
@@ -231,7 +232,7 @@ Return ONLY the story.
 
 
         // ======================================
-        // 1. CREATE SCENES
+        // 2. CREATE 4 SCENES
         // ======================================
 
         const scenePrompt = `
@@ -257,7 +258,7 @@ Keep consistent:
 - environment
 - cinematic visual identity
 
-Each scene must visually continue from the previous scene.
+Keep strong visual continuity between scenes.
 
 STYLE:
 
@@ -284,7 +285,7 @@ No markdown.
 No code fences.
 No explanation.
 
-Use EXACTLY this structure:
+Use EXACTLY:
 
 {
   "scenes": [
@@ -297,7 +298,7 @@ Use EXACTLY this structure:
 `;
 
 
-        const sceneResult = await runWithRetry(
+        const sceneResult = await aiRun(
           env,
           "@cf/qwen/qwen3-30b-a3b-fp8",
           {
@@ -309,8 +310,7 @@ Use EXACTLY this structure:
             ],
             max_tokens: 1200,
             temperature: 0.15
-          },
-          3
+          }
         );
 
 
@@ -345,10 +345,10 @@ Use EXACTLY this structure:
 
 
         // ======================================
-        // 2. CREATE VOICE
+        // 3. CREATE VOICE
         // ======================================
 
-        const tts = await runWithRetry(
+        const tts = await aiRun(
           env,
           "xai/grok-tts",
           {
@@ -361,8 +361,7 @@ Use EXACTLY this structure:
               sample_rate: 44100,
               bit_rate: 192000
             }
-          },
-          3
+          }
         );
 
 
@@ -382,7 +381,7 @@ Use EXACTLY this structure:
 
 
         // ======================================
-        // 3. GENERATE 4 IMAGES
+        // 4. GENERATE 4 IMAGES WITH FLUX
         // ======================================
 
         const images = [];
@@ -390,38 +389,50 @@ Use EXACTLY this structure:
 
         for (let i = 0; i < 4; i++) {
 
-          const imagePrompt = scenes.scenes[i];
+          const imagePrompt = `
+${scenes.scenes[i]}
+
+IMPORTANT IMAGE REQUIREMENTS:
+
+Vertical cinematic composition.
+
+Portrait 9:16 feeling.
+
+Realistic photography.
+
+Dark psychological horror atmosphere.
+
+Keep the same main character and visual identity
+as the other scenes.
+`;
 
 
-          const imageResult =
-            await runWithRetry(
-              env,
-              "alibaba/qwen-image-3.0-pro",
-              {
-                prompt: imagePrompt,
+          const imageResult = await aiRun(
+            env,
+            "@cf/black-forest-labs/flux-1-schnell",
+            {
+              prompt: imagePrompt,
 
-                size: "1024x1536",
+              steps: 6,
 
-                n: 1,
-
-                watermark: false,
-
-                prompt_extend: true
-              },
-              3
-            );
+              seed:
+                Math.floor(
+                  Math.random() * 2147483647
+                )
+            }
+          );
 
 
-          const image =
-            imageResult?.images?.[0] ||
-            imageResult?.result?.images?.[0] ||
+          const base64Image =
+            imageResult?.image ||
+            imageResult?.result?.image ||
             null;
 
 
-          if (!image) {
+          if (!base64Image) {
 
             throw new Error(
-              `Image generation failed for scene ${i + 1}.`
+              `FLUX image generation failed for scene ${i + 1}.`
             );
 
           }
@@ -431,9 +442,10 @@ Use EXACTLY this structure:
 
             scene: i + 1,
 
-            prompt: imagePrompt,
+            prompt: scenes.scenes[i],
 
-            image
+            image:
+              `data:image/jpeg;base64,${base64Image}`
 
           });
 
@@ -441,16 +453,16 @@ Use EXACTLY this structure:
 
 
         // ======================================
-        // 4. SUCCESS
+        // 5. SUCCESS
         // ======================================
 
         return json({
 
           success: true,
 
-          project: "UNKNOWN FILES",
-
           status: "ASSETS_READY",
+
+          project: "UNKNOWN FILES",
 
           duration: "45-60 seconds",
 
@@ -470,8 +482,11 @@ Use EXACTLY this structure:
 
           images,
 
+          image_model:
+            "@cf/black-forest-labs/flux-1-schnell",
+
           next_step:
-            "Assets ready. Next step is automatic MP4 assembly."
+            "Story, voice and 4 cinematic images are ready for MP4 assembly."
 
         }, corsHeaders);
 
@@ -512,50 +527,36 @@ Use EXACTLY this structure:
 };
 
 
-// ==================================================
-// RUN AI WITH RETRIES
-// ==================================================
+// ==========================================
+// AI RUN
+// ==========================================
 
-async function runWithRetry(
+async function aiRun(
   env,
   model,
-  input,
-  maxAttempts = 3
+  input
 ) {
 
   let lastError = null;
 
 
-  for (
-    let attempt = 1;
-    attempt <= maxAttempts;
-    attempt++
-  ) {
+  for (let attempt = 1; attempt <= 3; attempt++) {
 
     try {
 
-      const result = await env.AI.run(
-
+      return await env.AI.run(
         model,
-
         input,
-
         {
           gateway: {
             id: "default"
           }
         }
-
       );
-
-
-      return result;
-
 
     } catch (error) {
 
       lastError = error;
-
 
       const message =
         getErrorMessage(error).toLowerCase();
@@ -565,13 +566,12 @@ async function runWithRetry(
         message.includes("7004") ||
         message.includes("upstream") ||
         message.includes("unavailable") ||
-        message.includes("timeout") ||
-        message.includes("temporarily");
+        message.includes("timeout");
 
 
       if (
         !retryable ||
-        attempt === maxAttempts
+        attempt === 3
       ) {
 
         throw error;
@@ -579,14 +579,11 @@ async function runWithRetry(
       }
 
 
-      // Exponential backoff:
-      // 1.5 sec → 3 sec
-
-      const delay =
-        1500 * Math.pow(2, attempt - 1);
-
-
-      await sleep(delay);
+      await sleep(
+        attempt === 1
+          ? 1500
+          : 3000
+      );
 
     }
 
@@ -598,55 +595,39 @@ async function runWithRetry(
 }
 
 
-// ==================================================
+// ==========================================
 // EXTRACT AI TEXT
-// ==================================================
+// ==========================================
 
 function extractAIText(result) {
 
-  if (!result) {
-    return "";
-  }
-
+  if (!result) return "";
 
   if (typeof result === "string") {
     return result.trim();
   }
 
-
-  if (
-    typeof result.response === "string"
-  ) {
+  if (typeof result.response === "string") {
     return result.response.trim();
   }
 
-
-  if (
-    typeof result.content === "string"
-  ) {
+  if (typeof result.content === "string") {
     return result.content.trim();
   }
-
 
   if (
     result.result &&
     typeof result.result.response === "string"
   ) {
-
     return result.result.response.trim();
-
   }
-
 
   if (
     result.result &&
     typeof result.result.content === "string"
   ) {
-
     return result.result.content.trim();
-
   }
-
 
   if (
     result.result &&
@@ -658,26 +639,17 @@ function extractAIText(result) {
     const message =
       result.result.choices[0].message;
 
-
-    if (
-      typeof message.content === "string"
-    ) {
-
+    if (typeof message.content === "string") {
       return message.content.trim();
-
     }
-
 
     if (
       typeof message.reasoning_content === "string"
     ) {
-
       return message.reasoning_content.trim();
-
     }
 
   }
-
 
   if (
     result.choices &&
@@ -688,64 +660,44 @@ function extractAIText(result) {
     const message =
       result.choices[0].message;
 
-
-    if (
-      typeof message.content === "string"
-    ) {
-
+    if (typeof message.content === "string") {
       return message.content.trim();
-
     }
 
   }
-
 
   return "";
 
 }
 
 
-// ==================================================
-// SAFE SCENE JSON PARSER
-// ==================================================
+// ==========================================
+// SCENE JSON PARSER
+// ==========================================
 
 function parseSceneJSON(text) {
 
   let cleaned =
     String(text)
-
       .replace(/```json/gi, "")
-
       .replace(/```/g, "")
-
       .trim();
 
-
-  // -----------------------------------------------
-  // Direct JSON
-  // -----------------------------------------------
 
   try {
 
     const direct =
       JSON.parse(cleaned);
 
-
     if (
       direct &&
       Array.isArray(direct.scenes)
     ) {
-
       return direct;
-
     }
 
   } catch (e) {}
 
-
-  // -----------------------------------------------
-  // Extract object
-  // -----------------------------------------------
 
   const firstBrace =
     cleaned.indexOf("{");
@@ -756,21 +708,18 @@ function parseSceneJSON(text) {
 
   if (
     firstBrace !== -1 &&
-    lastBrace !== -1 &&
-    lastBrace > firstBrace
+    lastBrace !== -1
   ) {
-
-    const possibleJSON =
-      cleaned.substring(
-        firstBrace,
-        lastBrace + 1
-      );
-
 
     try {
 
       const parsed =
-        JSON.parse(possibleJSON);
+        JSON.parse(
+          cleaned.substring(
+            firstBrace,
+            lastBrace + 1
+          )
+        );
 
 
       if (
@@ -787,10 +736,6 @@ function parseSceneJSON(text) {
   }
 
 
-  // -----------------------------------------------
-  // Extract array
-  // -----------------------------------------------
-
   const firstBracket =
     cleaned.indexOf("[");
 
@@ -800,21 +745,18 @@ function parseSceneJSON(text) {
 
   if (
     firstBracket !== -1 &&
-    lastBracket !== -1 &&
-    lastBracket > firstBracket
+    lastBracket !== -1
   ) {
-
-    const possibleArray =
-      cleaned.substring(
-        firstBracket,
-        lastBracket + 1
-      );
-
 
     try {
 
       const array =
-        JSON.parse(possibleArray);
+        JSON.parse(
+          cleaned.substring(
+            firstBracket,
+            lastBracket + 1
+          )
+        );
 
 
       if (
@@ -833,17 +775,10 @@ function parseSceneJSON(text) {
   }
 
 
-  // -----------------------------------------------
-  // Last resort
-  // -----------------------------------------------
-
   const lines =
     cleaned
-
       .split("\n")
-
       .map(x => x.trim())
-
       .filter(x => x.length > 20);
 
 
@@ -854,23 +789,17 @@ function parseSceneJSON(text) {
       scenes:
 
         lines
-
           .slice(0, 4)
-
           .map(x =>
-
             x
-
               .replace(
                 /^[-*0-9.)]+\s*/,
                 ""
               )
-
               .replace(
                 /^["']|["']$/g,
                 ""
               )
-
           )
 
     };
@@ -879,56 +808,39 @@ function parseSceneJSON(text) {
 
 
   throw new Error(
-
     "Could not parse scene prompts. AI returned: " +
-
     cleaned.substring(0, 1000)
-
   );
 
 }
 
 
-// ==================================================
-// ERROR MESSAGE
-// ==================================================
+// ==========================================
+// ERROR
+// ==========================================
 
 function getErrorMessage(error) {
 
-  if (
-    error instanceof Error
-  ) {
-
+  if (error instanceof Error) {
     return error.message;
-
   }
 
-
-  if (
-    typeof error === "string"
-  ) {
-
+  if (typeof error === "string") {
     return error;
-
   }
-
 
   try {
-
     return JSON.stringify(error);
-
   } catch (e) {
-
     return String(error);
-
   }
 
 }
 
 
-// ==================================================
+// ==========================================
 // SLEEP
-// ==================================================
+// ==========================================
 
 function sleep(ms) {
 
@@ -939,9 +851,9 @@ function sleep(ms) {
 }
 
 
-// ==================================================
-// JSON RESPONSE
-// ==================================================
+// ==========================================
+// JSON
+// ==========================================
 
 function json(
   data,
@@ -958,16 +870,12 @@ function json(
     ),
 
     {
-
       status,
 
       headers: {
-
         ...corsHeaders,
-
         "Content-Type":
           "application/json"
-
       }
 
     }
