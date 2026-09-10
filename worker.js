@@ -1,26 +1,59 @@
+import { Container, getContainer } from "@cloudflare/containers";
+
+
+// ==================================================
+// VIDEO CONTAINER
+// ==================================================
+
+export class VideoContainer extends Container {
+
+  defaultPort = 8080;
+
+  sleepAfter = "10m";
+
+}
+
+
+// ==================================================
+// WORKER
+// ==================================================
+
 var worker_default = {
 
   async fetch(request, env) {
 
     const url = new URL(request.url);
 
+
     const corsHeaders = {
+
       "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type"
+
+      "Access-Control-Allow-Methods":
+        "GET, POST, OPTIONS",
+
+      "Access-Control-Allow-Headers":
+        "Content-Type"
+
     };
 
+
     if (request.method === "OPTIONS") {
+
       return new Response(null, {
+
         status: 204,
+
         headers: corsHeaders
+
       });
+
     }
 
 
-    // ==========================================
+    // ==================================================
     // HOME
-    // ==========================================
+    // ==================================================
 
     if (
       url.pathname === "/" &&
@@ -28,23 +61,37 @@ var worker_default = {
     ) {
 
       return json({
+
         status: "ONLINE",
+
         agent: "UNKNOWN FILES",
-        version: "4.0",
-        image_model: "@cf/black-forest-labs/flux-1-schnell",
+
+        version: "5.0",
+
+        image_model:
+          "@cf/black-forest-labs/flux-1-schnell",
+
+        video_engine:
+          "Cloudflare Container + FFmpeg",
+
         endpoints: [
+
           "POST /api/create-story",
+
           "POST /api/create-assets",
+
           "POST /api/generate-short"
+
         ]
+
       }, corsHeaders);
 
     }
 
 
-    // ==========================================
+    // ==================================================
     // CREATE STORY
-    // ==========================================
+    // ==================================================
 
     if (
       url.pathname === "/api/create-story" &&
@@ -53,7 +100,9 @@ var worker_default = {
 
       try {
 
-        const body = await request.json();
+        const body =
+          await request.json();
+
 
         const topic =
           body.topic ||
@@ -61,11 +110,13 @@ var worker_default = {
 
 
         const prompt = `
+
 You are the writer for a viral YouTube Shorts channel called UNKNOWN FILES.
 
 Create a realistic mystery / psychological horror story.
 
 TOPIC:
+
 ${topic}
 
 REQUIREMENTS:
@@ -88,32 +139,49 @@ REQUIREMENTS:
 - No bullet points
 
 Return ONLY the story.
+
 `;
 
 
         const result = await aiRun(
+
           env,
+
           "@cf/qwen/qwen3-30b-a3b-fp8",
+
           {
+
             messages: [
+
               {
+
                 role: "user",
+
                 content: prompt
+
               }
+
             ],
+
             max_tokens: 500,
+
             temperature: 0.7
+
           }
+
         );
 
 
-        const story = extractAIText(result);
+        const story =
+          extractAIText(result);
 
 
         if (!story) {
+
           throw new Error(
             "Story generation returned empty content."
           );
+
         }
 
 
@@ -134,7 +202,8 @@ Return ONLY the story.
 
           success: false,
 
-          error: getErrorMessage(error)
+          error:
+            getErrorMessage(error)
 
         }, corsHeaders, 500);
 
@@ -143,28 +212,36 @@ Return ONLY the story.
     }
 
 
-    // ==========================================
-    // CREATE ASSETS / GENERATE SHORT
-    // ==========================================
+    // ==================================================
+    // CREATE ASSETS + GENERATE MP4
+    // ==================================================
 
     if (
+
       (
         url.pathname === "/api/create-assets" ||
         url.pathname === "/api/generate-short"
-      ) &&
+      )
+
+      &&
+
       request.method === "POST"
+
     ) {
 
       try {
 
-        const body = await request.json();
+        const body =
+          await request.json();
 
-        let story = body.story;
+
+        let story =
+          body.story;
 
 
-        // ======================================
+        // ==================================================
         // 1. CREATE STORY IF NEEDED
-        // ======================================
+        // ==================================================
 
         if (!story) {
 
@@ -174,11 +251,13 @@ Return ONLY the story.
 
 
           const storyPrompt = `
+
 You are the writer for a viral YouTube Shorts channel called UNKNOWN FILES.
 
 Create a realistic mystery / psychological horror story.
 
 TOPIC:
+
 ${topic}
 
 Requirements:
@@ -200,42 +279,63 @@ Requirements:
 - No explanations
 
 Return ONLY the story.
+
 `;
 
 
-          const storyResult = await aiRun(
-            env,
-            "@cf/qwen/qwen3-30b-a3b-fp8",
-            {
-              messages: [
-                {
-                  role: "user",
-                  content: storyPrompt
-                }
-              ],
-              max_tokens: 500,
-              temperature: 0.7
-            }
-          );
+          const storyResult =
+            await aiRun(
+
+              env,
+
+              "@cf/qwen/qwen3-30b-a3b-fp8",
+
+              {
+
+                messages: [
+
+                  {
+
+                    role: "user",
+
+                    content: storyPrompt
+
+                  }
+
+                ],
+
+                max_tokens: 500,
+
+                temperature: 0.7
+
+              }
+
+            );
 
 
-          story = extractAIText(storyResult);
+          story =
+            extractAIText(
+              storyResult
+            );
 
 
           if (!story) {
+
             throw new Error(
               "Story generation returned empty content."
             );
+
           }
 
         }
 
 
-        // ======================================
+        // ==================================================
         // 2. CREATE 4 SCENES
-        // ======================================
+        // ==================================================
 
         const scenePrompt = `
+
 You are a professional cinematic storyboard director.
 
 Read this horror story:
@@ -295,27 +395,44 @@ Use EXACTLY:
     "scene 4 prompt"
   ]
 }
+
 `;
 
 
-        const sceneResult = await aiRun(
-          env,
-          "@cf/qwen/qwen3-30b-a3b-fp8",
-          {
-            messages: [
-              {
-                role: "user",
-                content: scenePrompt
-              }
-            ],
-            max_tokens: 1200,
-            temperature: 0.15
-          }
-        );
+        const sceneResult =
+          await aiRun(
+
+            env,
+
+            "@cf/qwen/qwen3-30b-a3b-fp8",
+
+            {
+
+              messages: [
+
+                {
+
+                  role: "user",
+
+                  content: scenePrompt
+
+                }
+
+              ],
+
+              max_tokens: 1200,
+
+              temperature: 0.15
+
+            }
+
+          );
 
 
         const rawSceneText =
-          extractAIText(sceneResult);
+          extractAIText(
+            sceneResult
+          );
 
 
         if (!rawSceneText) {
@@ -328,13 +445,21 @@ Use EXACTLY:
 
 
         const scenes =
-          parseSceneJSON(rawSceneText);
+          parseSceneJSON(
+            rawSceneText
+          );
 
 
         if (
+
           !scenes ||
-          !Array.isArray(scenes.scenes) ||
+
+          !Array.isArray(
+            scenes.scenes
+          ) ||
+
           scenes.scenes.length !== 4
+
         ) {
 
           throw new Error(
@@ -344,30 +469,46 @@ Use EXACTLY:
         }
 
 
-        // ======================================
+        // ==================================================
         // 3. CREATE VOICE
-        // ======================================
+        // ==================================================
 
-        const tts = await aiRun(
-          env,
-          "xai/grok-tts",
-          {
-            text: story,
-            language: "en",
-            voice_id: "leo",
+        const tts =
+          await aiRun(
 
-            output_format: {
-              codec: "mp3",
-              sample_rate: 44100,
-              bit_rate: 192000
+            env,
+
+            "xai/grok-tts",
+
+            {
+
+              text: story,
+
+              language: "en",
+
+              voice_id: "leo",
+
+              output_format: {
+
+                codec: "mp3",
+
+                sample_rate: 44100,
+
+                bit_rate: 192000
+
+              }
+
             }
-          }
-        );
+
+          );
 
 
         const audio =
+
           tts?.audio ||
+
           tts?.result?.audio ||
+
           null;
 
 
@@ -380,16 +521,21 @@ Use EXACTLY:
         }
 
 
-        // ======================================
-        // 4. GENERATE 4 IMAGES WITH FLUX
-        // ======================================
+        // ==================================================
+        // 4. GENERATE 4 IMAGES
+        // ==================================================
 
         const images = [];
 
 
-        for (let i = 0; i < 4; i++) {
+        for (
+          let i = 0;
+          i < 4;
+          i++
+        ) {
 
           const imagePrompt = `
+
 ${scenes.scenes[i]}
 
 IMPORTANT IMAGE REQUIREMENTS:
@@ -404,31 +550,50 @@ Dark psychological horror atmosphere.
 
 Keep the same main character and visual identity
 as the other scenes.
+
+No text.
+
+No subtitles.
+
+No logos.
+
 `;
 
 
-          const imageResult = await aiRun(
-            env,
-            "@cf/black-forest-labs/flux-1-schnell",
-            {
-              prompt: imagePrompt,
+          const imageResult =
+            await aiRun(
 
-              steps: 6,
+              env,
 
-            }
-          );
+              "@cf/black-forest-labs/flux-1-schnell",
+
+              {
+
+                prompt:
+                  imagePrompt,
+
+                steps: 6
+
+              }
+
+            );
 
 
           const base64Image =
+
             imageResult?.image ||
+
             imageResult?.result?.image ||
+
             null;
 
 
           if (!base64Image) {
 
             throw new Error(
+
               `FLUX image generation failed for scene ${i + 1}.`
+
             );
 
           }
@@ -438,7 +603,8 @@ as the other scenes.
 
             scene: i + 1,
 
-            prompt: scenes.scenes[i],
+            prompt:
+              scenes.scenes[i],
 
             image:
               `data:image/jpeg;base64,${base64Image}`
@@ -448,41 +614,150 @@ as the other scenes.
         }
 
 
-        // ======================================
-        // 5. SUCCESS
-        // ======================================
+        // ==================================================
+        // 5. SEND IMAGES + AUDIO TO FFMPEG CONTAINER
+        // ==================================================
+
+        const container =
+
+          getContainer(
+
+            env.VIDEO_CONTAINER,
+
+            "unknown-files-main"
+
+          );
+
+
+        const renderRequest =
+
+          new Request(
+
+            "http://video/render",
+
+            {
+
+              method: "POST",
+
+              headers: {
+
+                "Content-Type":
+                  "application/json"
+
+              },
+
+              body:
+                JSON.stringify({
+
+                  images:
+                    images.map(
+                      item => item.image
+                    ),
+
+                  audio
+
+                })
+
+            }
+
+          );
+
+
+        const renderResponse =
+
+          await container.fetch(
+            renderRequest
+          );
+
+
+        if (!renderResponse.ok) {
+
+          const errorText =
+            await renderResponse.text();
+
+
+          throw new Error(
+
+            "MP4 rendering failed: " +
+            errorText
+
+          );
+
+        }
+
+
+        // ==================================================
+        // 6. GET MP4
+        // ==================================================
+
+        const videoBuffer =
+          await renderResponse.arrayBuffer();
+
+
+        const videoBase64 =
+          arrayBufferToBase64(
+            videoBuffer
+          );
+
+
+        // ==================================================
+        // 7. FINAL RESPONSE
+        // ==================================================
 
         return json({
 
           success: true,
 
-          status: "ASSETS_READY",
+          status:
+            "SHORT_CREATED",
 
-          project: "UNKNOWN FILES",
+          project:
+            "UNKNOWN FILES",
 
-          duration: "45-60 seconds",
+          duration:
+            "45-60 seconds",
 
           story,
 
           audio: {
 
-            model: "xai/grok-tts",
+            model:
+              "xai/grok-tts",
 
-            voice: "leo",
+            voice:
+              "leo",
 
-            url: audio
+            url:
+              audio
 
           },
 
-          scenes: scenes.scenes,
+          scenes:
+            scenes.scenes,
 
           images,
+
+          video: {
+
+            filename:
+              "UNKNOWN_FILES.mp4",
+
+            mime_type:
+              "video/mp4",
+
+            base64:
+              videoBase64
+
+          },
 
           image_model:
             "@cf/black-forest-labs/flux-1-schnell",
 
+          video_model:
+            "FFmpeg",
+
           next_step:
-            "Story, voice and 4 cinematic images are ready for MP4 assembly."
+            "Short successfully rendered."
 
         }, corsHeaders);
 
@@ -493,9 +768,11 @@ as the other scenes.
 
           success: false,
 
-          status: "FAILED",
+          status:
+            "FAILED",
 
-          error: getErrorMessage(error)
+          error:
+            getErrorMessage(error)
 
         }, corsHeaders, 500);
 
@@ -504,17 +781,19 @@ as the other scenes.
     }
 
 
-    // ==========================================
+    // ==================================================
     // NOT FOUND
-    // ==========================================
+    // ==================================================
 
     return json({
 
       success: false,
 
-      error: "Not found",
+      error:
+        "Not found",
 
-      path: url.pathname
+      path:
+        url.pathname
 
     }, corsHeaders, 404);
 
@@ -523,9 +802,9 @@ as the other scenes.
 };
 
 
-// ==========================================
+// ==================================================
 // AI RUN
-// ==========================================
+// ==================================================
 
 async function aiRun(
   env,
@@ -536,33 +815,59 @@ async function aiRun(
   let lastError = null;
 
 
-  for (let attempt = 1; attempt <= 3; attempt++) {
+  for (
+    let attempt = 1;
+    attempt <= 3;
+    attempt++
+  ) {
 
     try {
 
       return await env.AI.run(
+
         model,
+
         input,
+
         {
+
           gateway: {
+
             id: "default"
+
           }
+
         }
+
       );
 
     } catch (error) {
 
-      lastError = error;
+      lastError =
+        error;
+
 
       const message =
-        getErrorMessage(error).toLowerCase();
+        getErrorMessage(
+          error
+        ).toLowerCase();
 
 
       const retryable =
+
         message.includes("7004") ||
-        message.includes("upstream") ||
-        message.includes("unavailable") ||
-        message.includes("timeout");
+
+        message.includes(
+          "upstream"
+        ) ||
+
+        message.includes(
+          "unavailable"
+        ) ||
+
+        message.includes(
+          "timeout"
+        );
 
 
       if (
@@ -576,9 +881,11 @@ async function aiRun(
 
 
       await sleep(
+
         attempt === 1
           ? 1500
           : 3000
+
       );
 
     }
@@ -591,109 +898,194 @@ async function aiRun(
 }
 
 
-// ==========================================
+// ==================================================
 // EXTRACT AI TEXT
-// ==========================================
+// ==================================================
 
 function extractAIText(result) {
 
-  if (!result) return "";
+  if (!result) {
 
-  if (typeof result === "string") {
+    return "";
+
+  }
+
+
+  if (
+    typeof result === "string"
+  ) {
+
     return result.trim();
+
   }
 
-  if (typeof result.response === "string") {
+
+  if (
+    typeof result.response ===
+    "string"
+  ) {
+
     return result.response.trim();
+
   }
 
-  if (typeof result.content === "string") {
+
+  if (
+    typeof result.content ===
+    "string"
+  ) {
+
     return result.content.trim();
+
   }
 
+
   if (
+
     result.result &&
-    typeof result.result.response === "string"
+
+    typeof result.result.response ===
+    "string"
+
   ) {
+
     return result.result.response.trim();
+
   }
 
+
   if (
+
     result.result &&
-    typeof result.result.content === "string"
+
+    typeof result.result.content ===
+    "string"
+
   ) {
+
     return result.result.content.trim();
+
   }
 
+
   if (
+
     result.result &&
+
     result.result.choices &&
+
     result.result.choices[0] &&
+
     result.result.choices[0].message
+
   ) {
 
     const message =
       result.result.choices[0].message;
 
-    if (typeof message.content === "string") {
-      return message.content.trim();
-    }
 
     if (
-      typeof message.reasoning_content === "string"
+      typeof message.content ===
+      "string"
     ) {
+
+      return message.content.trim();
+
+    }
+
+
+    if (
+      typeof message.reasoning_content ===
+      "string"
+    ) {
+
       return message.reasoning_content.trim();
+
     }
 
   }
 
+
   if (
+
     result.choices &&
+
     result.choices[0] &&
+
     result.choices[0].message
+
   ) {
 
     const message =
       result.choices[0].message;
 
-    if (typeof message.content === "string") {
+
+    if (
+      typeof message.content ===
+      "string"
+    ) {
+
       return message.content.trim();
+
     }
 
   }
+
 
   return "";
 
 }
 
 
-// ==========================================
+// ==================================================
 // SCENE JSON PARSER
-// ==========================================
+// ==================================================
 
 function parseSceneJSON(text) {
 
   let cleaned =
+
     String(text)
-      .replace(/```json/gi, "")
-      .replace(/```/g, "")
+
+      .replace(
+        /```json/gi,
+        ""
+      )
+
+      .replace(
+        /```/g,
+        ""
+      )
+
       .trim();
 
+
+  // Direct JSON
 
   try {
 
     const direct =
       JSON.parse(cleaned);
 
+
     if (
+
       direct &&
-      Array.isArray(direct.scenes)
+
+      Array.isArray(
+        direct.scenes
+      )
+
     ) {
+
       return direct;
+
     }
 
   } catch (e) {}
 
+
+  // Object extraction
 
   const firstBrace =
     cleaned.indexOf("{");
@@ -703,24 +1095,38 @@ function parseSceneJSON(text) {
 
 
   if (
+
     firstBrace !== -1 &&
+
     lastBrace !== -1
+
   ) {
 
     try {
 
       const parsed =
+
         JSON.parse(
+
           cleaned.substring(
+
             firstBrace,
+
             lastBrace + 1
+
           )
+
         );
 
 
       if (
+
         parsed &&
-        Array.isArray(parsed.scenes)
+
+        Array.isArray(
+          parsed.scenes
+        )
+
       ) {
 
         return parsed;
@@ -732,6 +1138,8 @@ function parseSceneJSON(text) {
   }
 
 
+  // Array extraction
+
   const firstBracket =
     cleaned.indexOf("[");
 
@@ -740,28 +1148,43 @@ function parseSceneJSON(text) {
 
 
   if (
+
     firstBracket !== -1 &&
+
     lastBracket !== -1
+
   ) {
 
     try {
 
       const array =
+
         JSON.parse(
+
           cleaned.substring(
+
             firstBracket,
+
             lastBracket + 1
+
           )
+
         );
 
 
       if (
+
         Array.isArray(array) &&
+
         array.length === 4
+
       ) {
 
         return {
-          scenes: array
+
+          scenes:
+            array
+
         };
 
       }
@@ -771,31 +1194,51 @@ function parseSceneJSON(text) {
   }
 
 
+  // Last resort
+
   const lines =
+
     cleaned
+
       .split("\n")
-      .map(x => x.trim())
-      .filter(x => x.length > 20);
+
+      .map(
+        x => x.trim()
+      )
+
+      .filter(
+        x => x.length > 20
+      );
 
 
-  if (lines.length >= 4) {
+  if (
+    lines.length >= 4
+  ) {
 
     return {
 
       scenes:
 
         lines
+
           .slice(0, 4)
-          .map(x =>
-            x
-              .replace(
-                /^[-*0-9.)]+\s*/,
-                ""
-              )
-              .replace(
-                /^["']|["']$/g,
-                ""
-              )
+
+          .map(
+
+            x =>
+
+              x
+
+                .replace(
+                  /^[-*0-9.)]+\s*/,
+                  ""
+                )
+
+                .replace(
+                  /^["']|["']$/g,
+                  ""
+                )
+
           )
 
     };
@@ -804,52 +1247,134 @@ function parseSceneJSON(text) {
 
 
   throw new Error(
+
     "Could not parse scene prompts. AI returned: " +
-    cleaned.substring(0, 1000)
+
+    cleaned.substring(
+      0,
+      1000
+    )
+
   );
 
 }
 
 
-// ==========================================
+// ==================================================
+// ARRAY BUFFER → BASE64
+// ==================================================
+
+function arrayBufferToBase64(
+  buffer
+) {
+
+  const bytes =
+    new Uint8Array(buffer);
+
+
+  let binary = "";
+
+
+  const chunkSize =
+    0x8000;
+
+
+  for (
+
+    let i = 0;
+
+    i < bytes.length;
+
+    i += chunkSize
+
+  ) {
+
+    binary +=
+
+      String.fromCharCode(
+
+        ...bytes.subarray(
+
+          i,
+
+          Math.min(
+            i + chunkSize,
+            bytes.length
+          )
+
+        )
+
+      );
+
+  }
+
+
+  return btoa(binary);
+
+}
+
+
+// ==================================================
 // ERROR
-// ==========================================
+// ==================================================
 
-function getErrorMessage(error) {
+function getErrorMessage(
+  error
+) {
 
-  if (error instanceof Error) {
+  if (
+    error instanceof Error
+  ) {
+
     return error.message;
+
   }
 
-  if (typeof error === "string") {
+
+  if (
+    typeof error === "string"
+  ) {
+
     return error;
+
   }
+
 
   try {
-    return JSON.stringify(error);
+
+    return JSON.stringify(
+      error
+    );
+
   } catch (e) {
+
     return String(error);
+
   }
 
 }
 
 
-// ==========================================
+// ==================================================
 // SLEEP
-// ==========================================
+// ==================================================
 
 function sleep(ms) {
 
   return new Promise(
-    resolve => setTimeout(resolve, ms)
+    resolve =>
+      setTimeout(
+        resolve,
+        ms
+      )
   );
 
 }
 
 
-// ==========================================
-// JSON
-// ==========================================
+// ==================================================
+// JSON RESPONSE
+// ==================================================
 
 function json(
   data,
@@ -866,12 +1391,16 @@ function json(
     ),
 
     {
+
       status,
 
       headers: {
+
         ...corsHeaders,
+
         "Content-Type":
           "application/json"
+
       }
 
     }
@@ -881,6 +1410,8 @@ function json(
 }
 
 
-export {
-  worker_default as default
-};
+// ==================================================
+// EXPORT
+// ==================================================
+
+export default worker_default;
