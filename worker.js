@@ -24,7 +24,6 @@ var worker_default = {
 
     const url = new URL(request.url);
 
-
     const corsHeaders = {
 
       "Access-Control-Allow-Origin": "*",
@@ -66,7 +65,7 @@ var worker_default = {
 
         agent: "UNKNOWN FILES",
 
-        version: "5.0",
+        version: "5.1",
 
         image_model:
           "@cf/black-forest-labs/flux-1-schnell",
@@ -103,7 +102,6 @@ var worker_default = {
         const body =
           await request.json();
 
-
         const topic =
           body.topic ||
           "A mysterious event that nobody can explain";
@@ -137,6 +135,9 @@ REQUIREMENTS:
 - No title
 - No explanations
 - No bullet points
+- Keep the horror non-graphic
+- No explicit violence
+- No sexual content
 
 Return ONLY the story.
 
@@ -277,6 +278,10 @@ Requirements:
 - No emojis
 - No title
 - No explanations
+- No bullet points
+- Keep the horror non-graphic
+- No explicit violence
+- No sexual content
 
 Return ONLY the story.
 
@@ -338,7 +343,7 @@ Return ONLY the story.
 
 You are a professional cinematic storyboard director.
 
-Read this horror story:
+Read this mystery story:
 
 ${story}
 
@@ -363,8 +368,8 @@ Keep strong visual continuity between scenes.
 STYLE:
 
 - realistic cinematic photography
-- psychological horror
-- dark mysterious atmosphere
+- psychological suspense
+- mysterious atmosphere
 - realistic human appearance
 - dramatic lighting
 - shallow depth of field
@@ -376,6 +381,12 @@ STYLE:
 - no subtitles
 - no logos
 - no watermark
+- non-graphic horror
+- no explicit violence
+- no blood
+- no gore
+- no sexual content
+- no nudity
 
 VERY IMPORTANT:
 
@@ -534,9 +545,15 @@ Use EXACTLY:
           i++
         ) {
 
+          const originalScene =
+            String(
+              scenes.scenes[i]
+            );
+
+
           const imagePrompt = `
 
-${scenes.scenes[i]}
+${originalScene}
 
 IMPORTANT IMAGE REQUIREMENTS:
 
@@ -544,9 +561,9 @@ Vertical cinematic composition.
 
 Portrait 9:16 feeling.
 
-Realistic photography.
+Realistic professional photography.
 
-Dark psychological horror atmosphere.
+Dark mysterious psychological suspense atmosphere.
 
 Keep the same main character and visual identity
 as the other scenes.
@@ -557,24 +574,29 @@ No subtitles.
 
 No logos.
 
+No watermark.
+
+Non-graphic horror.
+
+No explicit violence.
+
+No blood.
+
+No gore.
+
+No nudity.
+
+No sexual content.
+
 `;
 
 
           const imageResult =
-            await aiRun(
+            await generateSafeImage(
 
               env,
 
-              "@cf/black-forest-labs/flux-1-schnell",
-
-              {
-
-                prompt:
-                  imagePrompt,
-
-                steps: 6
-
-              }
+              imagePrompt
 
             );
 
@@ -604,7 +626,7 @@ No logos.
             scene: i + 1,
 
             prompt:
-              scenes.scenes[i],
+              originalScene,
 
             image:
               `data:image/jpeg;base64,${base64Image}`
@@ -800,6 +822,237 @@ No logos.
   }
 
 };
+
+
+// ==================================================
+// SAFE IMAGE GENERATION
+// ==================================================
+
+async function generateSafeImage(
+  env,
+  prompt
+) {
+
+  try {
+
+    return await aiRun(
+
+      env,
+
+      "@cf/black-forest-labs/flux-1-schnell",
+
+      {
+
+        prompt,
+
+        steps: 6
+
+      }
+
+    );
+
+  } catch (error) {
+
+    const message =
+      getErrorMessage(
+        error
+      ).toLowerCase();
+
+
+    // If FLUX safety filter blocks the prompt,
+    // create a safer visual version and retry once.
+
+    if (
+
+      message.includes("8007") ||
+
+      message.includes("nsfw") ||
+
+      message.includes("input prompt")
+
+    ) {
+
+      const safePrompt =
+        sanitizeImagePrompt(
+          prompt
+        );
+
+
+      return await aiRun(
+
+        env,
+
+        "@cf/black-forest-labs/flux-1-schnell",
+
+        {
+
+          prompt:
+            safePrompt,
+
+          steps: 6
+
+        }
+
+      );
+
+    }
+
+
+    throw error;
+
+  }
+
+}
+
+
+// ==================================================
+// SANITIZE IMAGE PROMPT
+// ==================================================
+
+function sanitizeImagePrompt(
+  prompt
+) {
+
+  let safe =
+    String(prompt);
+
+
+  const replacements = [
+
+    // Violence
+
+    [/blood/gi, "dark red lighting"],
+
+    [/bloody/gi, "dark dramatic lighting"],
+
+    [/gore/gi, "dramatic suspense"],
+
+    [/gory/gi, "dramatic suspense"],
+
+    [/corpse/gi, "empty room"],
+
+    [/dead body/gi, "empty room"],
+
+    [/dead person/gi, "empty room"],
+
+    [/murder/gi, "mysterious incident"],
+
+    [/killed/gi, "disappeared"],
+
+    [/kill/gi, "disappear"],
+
+    [/suicide/gi, "disturbing event"],
+
+    [/self-harm/gi, "disturbing event"],
+
+    [/stabbed/gi, "suddenly disappeared"],
+
+    [/stabbing/gi, "disturbing movement"],
+
+    [/weapon/gi, "mysterious object"],
+
+    [/gun/gi, "mysterious object"],
+
+    [/knife/gi, "metallic object"],
+
+
+    // Sexual content
+
+    [/nude/gi, "fully clothed"],
+
+    [/nudity/gi, "fully clothed"],
+
+    [/naked/gi, "fully clothed"],
+
+    [/sexual/gi, "non-romantic"],
+
+    [/sex/gi, "non-romantic"],
+
+    [/erotic/gi, "cinematic"],
+
+
+    // Other potentially sensitive terms
+
+    [/torture/gi, "psychological tension"],
+
+    [/abuse/gi, "disturbing situation"],
+
+    [/assault/gi, "confrontation"],
+
+    [/violent/gi, "intense"],
+
+    [/violence/gi, "psychological tension"]
+
+  ];
+
+
+  for (
+    const [pattern, replacement]
+    of replacements
+  ) {
+
+    safe =
+      safe.replace(
+        pattern,
+        replacement
+      );
+
+  }
+
+
+  return `
+
+Realistic cinematic psychological mystery scene.
+
+${safe}
+
+VISUAL SAFETY REQUIREMENTS:
+
+Adult characters only.
+
+Fully clothed.
+
+Non-graphic psychological suspense.
+
+No blood.
+
+No gore.
+
+No wounds.
+
+No corpses.
+
+No weapons.
+
+No sexual content.
+
+No nudity.
+
+No explicit violence.
+
+No disturbing graphic imagery.
+
+Dark cinematic atmosphere.
+
+Professional realistic photography.
+
+Dramatic lighting.
+
+Shallow depth of field.
+
+Vertical 9:16 composition.
+
+No text.
+
+No subtitles.
+
+No logos.
+
+No watermark.
+
+`;
+
+}
 
 
 // ==================================================
