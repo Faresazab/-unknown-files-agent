@@ -1,6 +1,6 @@
 import { spawn } from "node:child_process";
 import { createServer } from "node:http";
-import { writeFile, readFile, unlink } from "node:fs/promises";
+import { writeFile, readFile } from "node:fs/promises";
 
 const PORT = 8080;
 
@@ -20,7 +20,7 @@ function runFFmpeg(args) {
       } else {
         reject(
           new Error(
-            `FFmpeg failed with code ${code}: ${stderr.slice(-3000)}`
+            `FFmpeg failed: ${stderr.slice(-3000)}`
           )
         );
       }
@@ -28,7 +28,50 @@ function runFFmpeg(args) {
   });
 }
 
+async function saveInput(input, path) {
+
+  if (!input) {
+    throw new Error(`Missing input for ${path}`);
+  }
+
+  // Base64/data URL
+  if (input.startsWith("data:")) {
+
+    const comma = input.indexOf(",");
+
+    if (comma === -1) {
+      throw new Error("Invalid data URL");
+    }
+
+    const base64 = input.slice(comma + 1);
+
+    await writeFile(
+      path,
+      Buffer.from(base64, "base64")
+    );
+
+    return;
+  }
+
+  // Normal URL
+  const response = await fetch(input);
+
+  if (!response.ok) {
+    throw new Error(
+      `Could not download input: ${response.status}`
+    );
+  }
+
+  await writeFile(
+    path,
+    Buffer.from(
+      await response.arrayBuffer()
+    )
+  );
+}
+
 async function createVideo(body) {
+
   const images = body.images || [];
   const audio = body.audio;
 
@@ -40,51 +83,43 @@ async function createVideo(body) {
     throw new Error("Audio is required.");
   }
 
-  // Download audio
-  const audioResponse = await fetch(audio);
+  // ==========================================
+  // SAVE AUDIO
+  // ==========================================
 
-  if (!audioResponse.ok) {
-    throw new Error("Could not download audio.");
-  }
-
-  await writeFile(
-    "/tmp/audio.mp3",
-    Buffer.from(await audioResponse.arrayBuffer())
+  await saveInput(
+    audio,
+    "/tmp/audio.mp3"
   );
 
-  // Download 4 images
+  // ==========================================
+  // SAVE 4 IMAGES
+  // ==========================================
+
   for (let i = 0; i < 4; i++) {
-    const imageResponse = await fetch(images[i]);
 
-    if (!imageResponse.ok) {
-      throw new Error(`Could not download image ${i + 1}.`);
-    }
-
-    await writeFile(
-      `/tmp/image${i + 1}.jpg`,
-      Buffer.from(await imageResponse.arrayBuffer())
+    await saveInput(
+      images[i],
+      `/tmp/image${i + 1}.jpg`
     );
+
   }
 
-  /*
-    4 images.
-    Each image stays for 12 seconds.
-    Total = 48 seconds.
-
-    Video:
-    1080x1920
-    H.264
-    AAC
-    30 FPS
-  */
+  // ==========================================
+  // CREATE 48 SECOND SHORT
+  // ==========================================
 
   await runFFmpeg([
+
     "-loop", "1",
     "-i", "/tmp/image1.jpg",
+
     "-loop", "1",
     "-i", "/tmp/image2.jpg",
+
     "-loop", "1",
     "-i", "/tmp/image3.jpg",
+
     "-loop", "1",
     "-i", "/tmp/image4.jpg",
 
@@ -93,33 +128,43 @@ async function createVideo(body) {
     "-filter_complex",
 
     `
-    [0:v]scale=1080:1920:force_original_aspect_ratio=increase,
+    [0:v]
+    scale=1080:1920:force_original_aspect_ratio=increase,
     crop=1080:1920,
     setsar=1,
-    zoompan=z='min(zoom+0.0008,1.08)':d=360:s=1080x1920:fps=30[v0];
+    zoompan=z='min(zoom+0.0008,1.08)':d=360:s=1080x1920:fps=30
+    [v0];
 
-    [1:v]scale=1080:1920:force_original_aspect_ratio=increase,
+    [1:v]
+    scale=1080:1920:force_original_aspect_ratio=increase,
     crop=1080:1920,
     setsar=1,
-    zoompan=z='min(zoom+0.0008,1.08)':d=360:s=1080x1920:fps=30[v1];
+    zoompan=z='min(zoom+0.0008,1.08)':d=360:s=1080x1920:fps=30
+    [v1];
 
-    [2:v]scale=1080:1920:force_original_aspect_ratio=increase,
+    [2:v]
+    scale=1080:1920:force_original_aspect_ratio=increase,
     crop=1080:1920,
     setsar=1,
-    zoompan=z='min(zoom+0.0008,1.08)':d=360:s=1080x1920:fps=30[v2];
+    zoompan=z='min(zoom+0.0008,1.08)':d=360:s=1080x1920:fps=30
+    [v2];
 
-    [3:v]scale=1080:1920:force_original_aspect_ratio=increase,
+    [3:v]
+    scale=1080:1920:force_original_aspect_ratio=increase,
     crop=1080:1920,
     setsar=1,
-    zoompan=z='min(zoom+0.0008,1.08)':d=360:s=1080x1920:fps=30[v3];
+    zoompan=z='min(zoom+0.0008,1.08)':d=360:s=1080x1920:fps=30
+    [v3];
 
-    [v0][v1][v2][v3]concat=n=4:v=1:a=0[v]
+    [v0][v1][v2][v3]
+    concat=n=4:v=1:a=0
+    [v]
     `,
 
     "-map", "[v]",
     "-map", "4:a",
 
-    "-t", "48",
+    "-shortest",
 
     "-r", "30",
 
@@ -136,17 +181,21 @@ async function createVideo(body) {
 
     "-y",
     "/tmp/UNKNOWN_FILES.mp4"
+
   ]);
 
-  const video = await readFile(
+  return await readFile(
     "/tmp/UNKNOWN_FILES.mp4"
   );
-
-  return video;
 }
 
-const server = createServer(async (req, res) => {
-  try {
+
+// ==========================================
+// HTTP SERVER
+// ==========================================
+
+const server = createServer(
+  async (req, res) => {
 
     if (
       req.method === "GET" &&
@@ -154,13 +203,15 @@ const server = createServer(async (req, res) => {
     ) {
 
       res.writeHead(200, {
-        "Content-Type": "application/json"
+        "Content-Type":
+          "application/json"
       });
 
       res.end(
         JSON.stringify({
-          status: "ONLINE",
-          service: "UNKNOWN FILES VIDEO ENGINE"
+          success: true,
+          service:
+            "UNKNOWN FILES VIDEO ENGINE"
         })
       );
 
@@ -173,7 +224,6 @@ const server = createServer(async (req, res) => {
     ) {
 
       res.writeHead(404);
-
       res.end("Not found");
 
       return;
@@ -196,8 +246,11 @@ const server = createServer(async (req, res) => {
           await createVideo(data);
 
         res.writeHead(200, {
-          "Content-Type": "video/mp4",
-          "Content-Length": video.length
+          "Content-Type":
+            "video/mp4",
+
+          "Content-Length":
+            video.length
         });
 
         res.end(video);
@@ -207,7 +260,8 @@ const server = createServer(async (req, res) => {
         console.error(error);
 
         res.writeHead(500, {
-          "Content-Type": "application/json"
+          "Content-Type":
+            "application/json"
         });
 
         res.end(
@@ -221,17 +275,15 @@ const server = createServer(async (req, res) => {
 
     });
 
-  } catch (error) {
-
-    res.writeHead(500);
-
-    res.end(error.message);
-
   }
-});
+);
 
-server.listen(PORT, "0.0.0.0", () => {
-  console.log(
-    `UNKNOWN FILES video engine running on port ${PORT}`
-  );
-});
+server.listen(
+  PORT,
+  "0.0.0.0",
+  () => {
+    console.log(
+      `UNKNOWN FILES VIDEO ENGINE running on ${PORT}`
+    );
+  }
+);
