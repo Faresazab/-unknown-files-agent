@@ -415,10 +415,6 @@ as the other scenes.
 
               steps: 6,
 
-              seed:
-                Math.floor(
-                  Math.random() * 2147483647
-                )
             }
           );
 
