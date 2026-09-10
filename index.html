@@ -1,126 +1,217 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <title>AI Model Tester</title>
+  <title>UNKNOWN FILES AI AGENT</title>
 
   <style>
     * {
       box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: Arial, sans-serif;
     }
 
     body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
       background: #08090d;
       color: white;
       min-height: 100vh;
     }
 
-    .app {
-      max-width: 600px;
-      margin: auto;
-      padding: 30px 18px;
+    .container {
+      width: min(900px, 92%);
+      margin: 0 auto;
+      padding: 50px 0 80px;
     }
 
     h1 {
-      font-size: 30px;
+      font-size: 42px;
       margin-bottom: 8px;
     }
 
     .subtitle {
-      color: #777;
+      color: #999;
+      margin-bottom: 40px;
+      font-size: 17px;
+    }
+
+    .card {
+      background: #11131a;
+      border: 1px solid #272a34;
+      border-radius: 20px;
+      padding: 25px;
       margin-bottom: 25px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 10px;
+      font-weight: bold;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 130px;
+      background: #08090d;
+      color: white;
+      border: 1px solid #30333d;
+      border-radius: 14px;
+      padding: 15px;
+      font-size: 16px;
+      resize: vertical;
+      outline: none;
+    }
+
+    textarea:focus {
+      border-color: #777;
     }
 
     button {
       width: 100%;
-      padding: 20px;
+      margin-top: 18px;
+      padding: 18px;
       border: 0;
-      border-radius: 16px;
-      background: white;
-      color: black;
-      font-size: 17px;
+      border-radius: 14px;
+      font-size: 18px;
       font-weight: bold;
       cursor: pointer;
+      background: white;
+      color: black;
     }
 
     button:disabled {
-      opacity: .5;
-      cursor: wait;
+      opacity: 0.5;
+      cursor: not-allowed;
     }
 
     .status {
       margin-top: 20px;
-      padding: 18px;
-      border-radius: 16px;
-      background: #12141a;
-      border: 1px solid #22252d;
+      padding: 16px;
+      border-radius: 12px;
+      background: #191b23;
+      color: #ccc;
+      white-space: pre-wrap;
     }
 
-    .results {
+    .story {
+      line-height: 1.7;
+      color: #ddd;
+      white-space: pre-wrap;
+    }
+
+    .audio {
+      width: 100%;
+      margin-top: 15px;
+    }
+
+    .images {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 15px;
       margin-top: 20px;
-      padding: 18px;
-      border-radius: 16px;
-      background: #12141a;
-      border: 1px solid #22252d;
+    }
+
+    .scene {
+      background: #08090d;
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid #292c35;
+    }
+
+    .scene img {
+      width: 100%;
+      display: block;
+    }
+
+    .scene-title {
+      padding: 12px;
+      color: #aaa;
+      font-size: 14px;
+    }
+
+    .hidden {
       display: none;
     }
 
-    pre {
-      white-space: pre-wrap;
-      word-break: break-word;
-      color: #ccc;
-      font-size: 13px;
-      line-height: 1.5;
+    .success {
+      color: #7cff9b;
     }
 
-    .dot {
-      display: inline-block;
-      width: 8px;
-      height: 8px;
-      background: #35d07f;
-      border-radius: 50%;
-      margin-right: 8px;
+    .error {
+      color: #ff7777;
+    }
+
+    @media (max-width: 600px) {
+      h1 {
+        font-size: 32px;
+      }
+
+      .images {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
 
 <body>
 
-  <div class="app">
+  <div class="container">
 
-    <h1>AI Model Tester</h1>
+    <h1>UNKNOWN FILES</h1>
 
     <div class="subtitle">
-      Testing Workers AI models individually.
+      AI-powered mystery & psychological horror video agent
     </div>
 
-    <button
-      id="testButton"
-      onclick="testModels()"
-    >
-      🧪 Test AI Models
-    </button>
+    <!-- INPUT -->
+    <div class="card">
 
-    <div class="status">
+      <label for="topic">
+        Story idea
+      </label>
 
-      <div id="statusText">
-        <span class="dot"></span>
-        Ready for test...
-      </div>
+      <textarea
+        id="topic"
+        placeholder="Example: A security camera recorded a man entering an abandoned house, but nobody ever saw him leave."
+      ></textarea>
+
+      <button id="createBtn">
+        🎬 CREATE STORY
+      </button>
+
+      <div id="status" class="status hidden"></div>
 
     </div>
 
-    <div
-      id="resultsBox"
-      class="results"
-    >
+    <!-- STORY -->
+    <div id="storyCard" class="card hidden">
 
-      <pre id="resultsText"></pre>
+      <h2>📖 Story</h2>
+
+      <div id="story" class="story"></div>
+
+    </div>
+
+    <!-- AUDIO -->
+    <div id="audioCard" class="card hidden">
+
+      <h2>🎙️ Voice</h2>
+
+      <audio
+        id="audio"
+        class="audio"
+        controls
+      ></audio>
+
+    </div>
+
+    <!-- IMAGES -->
+    <div id="imagesCard" class="card hidden">
+
+      <h2>🎬 Scenes</h2>
+
+      <div id="images" class="images"></div>
 
     </div>
 
@@ -129,96 +220,298 @@
 
 <script>
 
-async function testModels() {
+const API =
+  "https://unknown-files-agent1.gh4sy6ngr6.workers.dev";
 
-  const button =
-    document.getElementById(
-      "testButton"
+const createBtn =
+  document.getElementById("createBtn");
+
+const topicInput =
+  document.getElementById("topic");
+
+const statusBox =
+  document.getElementById("status");
+
+const storyCard =
+  document.getElementById("storyCard");
+
+const storyBox =
+  document.getElementById("story");
+
+const audioCard =
+  document.getElementById("audioCard");
+
+const audio =
+  document.getElementById("audio");
+
+const imagesCard =
+  document.getElementById("imagesCard");
+
+const imagesBox =
+  document.getElementById("images");
+
+
+function showStatus(message, type = "") {
+
+  statusBox.className =
+    "status";
+
+  if (type) {
+    statusBox.classList.add(type);
+  }
+
+  statusBox.textContent = message;
+
+  statusBox.classList.remove("hidden");
+}
+
+
+function hideResults() {
+
+  storyCard.classList.add("hidden");
+
+  audioCard.classList.add("hidden");
+
+  imagesCard.classList.add("hidden");
+
+  storyBox.textContent = "";
+
+  audio.removeAttribute("src");
+
+  imagesBox.innerHTML = "";
+}
+
+
+createBtn.addEventListener("click", async () => {
+
+  const topic =
+    topicInput.value.trim();
+
+  if (!topic) {
+
+    showStatus(
+      "Please enter a story idea first.",
+      "error"
     );
 
-  const status =
-    document.getElementById(
-      "statusText"
-    );
+    return;
+  }
 
-  const resultsBox =
-    document.getElementById(
-      "resultsBox"
-    );
+  hideResults();
 
-  const resultsText =
-    document.getElementById(
-      "resultsText"
-    );
-
-
-  button.disabled = true;
-
-  resultsBox.style.display =
-    "none";
-
-  status.innerHTML =
-    '<span class="dot"></span> 🔄 Testing Qwen3, Qwen Image and Grok TTS...';
-
+  createBtn.disabled = true;
 
   try {
 
-    const response =
+    // ==================================
+    // STEP 1 — CREATE STORY
+    // ==================================
+
+    showStatus(
+      "🧠 Creating the story..."
+    );
+
+    const storyResponse =
       await fetch(
-        "/api/test-models",
+        `${API}/api/create-story`,
         {
           method: "POST",
 
           headers: {
-            "Content-Type":
-              "application/json"
-          }
+            "Content-Type": "application/json"
+          },
+
+          body: JSON.stringify({
+            topic
+          })
         }
       );
 
 
-    const data =
-      await response.json();
+    const storyData =
+      await storyResponse.json();
 
 
-    resultsText.textContent =
-      JSON.stringify(
-        data,
-        null,
-        2
+    if (!storyResponse.ok ||
+        !storyData.success) {
+
+      throw new Error(
+        storyData.error ||
+        "Story generation failed."
       );
-
-    resultsBox.style.display =
-      "block";
-
-
-    if (
-      data.qwen3 &&
-      data.qwen3.success
-    ) {
-
-      status.innerHTML =
-        '<span class="dot"></span> ✅ Test completed. Check results below.';
-
-    } else {
-
-      status.innerHTML =
-        '<span class="dot"></span> ⚠️ One or more models failed.';
-
     }
 
-  } catch (error) {
 
-    status.innerHTML =
-      '<span class="dot"></span> ❌ ' +
-      error.message;
+    const story =
+      storyData.story;
+
+
+    // Show story immediately
+
+    storyBox.textContent =
+      story;
+
+    storyCard.classList.remove(
+      "hidden"
+    );
+
+
+    // ==================================
+    // STEP 2 — CREATE VOICE + IMAGES
+    // ==================================
+
+    showStatus(
+      "🎙️ Generating voice + 🎬 4 cinematic scenes...\n\nThis can take some time."
+    );
+
+
+    const assetsResponse =
+      await fetch(
+        `${API}/api/create-assets`,
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type": "application/json"
+          },
+
+          body: JSON.stringify({
+            story
+          })
+        }
+      );
+
+
+    const assetsData =
+      await assetsResponse.json();
+
+
+    if (!assetsResponse.ok ||
+        !assetsData.success) {
+
+      throw new Error(
+        assetsData.error ||
+        "Asset generation failed."
+      );
+    }
+
+
+    // ==================================
+    // AUDIO
+    // ==================================
+
+    if (
+      assetsData.audio &&
+      assetsData.audio.url
+    ) {
+
+      audio.src =
+        assetsData.audio.url;
+
+      audioCard.classList.remove(
+        "hidden"
+      );
+    }
+
+
+    // ==================================
+    // IMAGES
+    // ==================================
+
+    if (
+      Array.isArray(
+        assetsData.images
+      )
+    ) {
+
+      assetsBox:
+      for (
+        const scene
+        of assetsData.images
+      ) {
+
+        const wrapper =
+          document.createElement(
+            "div"
+          );
+
+        wrapper.className =
+          "scene";
+
+
+        const img =
+          document.createElement(
+            "img"
+          );
+
+        img.src =
+          scene.image;
+
+        img.alt =
+          `Scene ${scene.scene}`;
+
+
+        const title =
+          document.createElement(
+            "div"
+          );
+
+        title.className =
+          "scene-title";
+
+        title.textContent =
+          `Scene ${scene.scene}`;
+
+
+        wrapper.appendChild(img);
+
+        wrapper.appendChild(title);
+
+        imagesBox.appendChild(
+          wrapper
+        );
+      }
+
+
+      imagesCard.classList.remove(
+        "hidden"
+      );
+    }
+
+
+    // ==================================
+    // SUCCESS
+    // ==================================
+
+    showStatus(
+      "✅ REAL ASSETS CREATED!\n\nStory ✓\nVoice ✓\n4 Images ✓\n\nNext step: automatically assemble everything into an MP4.",
+      "success"
+    );
 
   }
 
+  catch (error) {
 
-  button.disabled = false;
+    console.error(error);
 
-}
+    showStatus(
+      "❌ ERROR\n\n" +
+      (
+        error.message ||
+        String(error)
+      ),
+      "error"
+    );
+
+  }
+
+  finally {
+
+    createBtn.disabled = false;
+
+  }
+
+});
 
 </script>
 
