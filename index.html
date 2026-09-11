@@ -92,6 +92,7 @@
       background: #191b23;
       color: #ccc;
       white-space: pre-wrap;
+      line-height: 1.5;
     }
 
     .story {
@@ -130,6 +131,35 @@
       font-size: 14px;
     }
 
+    .video-wrapper {
+      margin-top: 20px;
+      background: #08090d;
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid #292c35;
+    }
+
+    .video-wrapper video {
+      width: 100%;
+      display: block;
+      max-height: 750px;
+      background: black;
+    }
+
+    .download-btn {
+      display: block;
+      width: 100%;
+      margin-top: 18px;
+      padding: 17px;
+      border-radius: 14px;
+      background: white;
+      color: black;
+      text-align: center;
+      text-decoration: none;
+      font-weight: bold;
+      font-size: 17px;
+    }
+
     .hidden {
       display: none;
     }
@@ -142,6 +172,10 @@
       color: #ff7777;
     }
 
+    .rendering {
+      color: #ffd166;
+    }
+
     @media (max-width: 600px) {
       h1 {
         font-size: 32px;
@@ -149,6 +183,10 @@
 
       .images {
         grid-template-columns: 1fr;
+      }
+
+      .container {
+        padding-top: 30px;
       }
     }
   </style>
@@ -164,7 +202,11 @@
       AI-powered mystery & psychological horror video agent
     </div>
 
+
+    <!-- ========================================= -->
     <!-- INPUT -->
+    <!-- ========================================= -->
+
     <div class="card">
 
       <label for="topic">
@@ -184,7 +226,11 @@
 
     </div>
 
+
+    <!-- ========================================= -->
     <!-- STORY -->
+    <!-- ========================================= -->
+
     <div id="storyCard" class="card hidden">
 
       <h2>📖 Story</h2>
@@ -193,7 +239,11 @@
 
     </div>
 
+
+    <!-- ========================================= -->
     <!-- AUDIO -->
+    <!-- ========================================= -->
+
     <div id="audioCard" class="card hidden">
 
       <h2>🎙️ Voice</h2>
@@ -206,7 +256,11 @@
 
     </div>
 
+
+    <!-- ========================================= -->
     <!-- IMAGES -->
+    <!-- ========================================= -->
+
     <div id="imagesCard" class="card hidden">
 
       <h2>🎬 Scenes</h2>
@@ -215,6 +269,38 @@
 
     </div>
 
+
+    <!-- ========================================= -->
+    <!-- FINAL VIDEO -->
+    <!-- ========================================= -->
+
+    <div id="videoCard" class="card hidden">
+
+      <h2>🎥 Final MP4</h2>
+
+      <div class="video-wrapper">
+
+        <video
+          id="videoPlayer"
+          controls
+          playsinline
+          preload="metadata"
+        ></video>
+
+      </div>
+
+      <a
+        id="downloadVideo"
+        class="download-btn"
+        href="#"
+        download="UNKNOWN_FILES.mp4"
+      >
+        ⬇️ DOWNLOAD MP4
+      </a>
+
+    </div>
+
+
   </div>
 
 
@@ -222,6 +308,11 @@
 
 const API =
   "https://unknown-files-agent.gh4sy6ngr6.workers.dev";
+
+
+/* ========================================= */
+/* ELEMENTS */
+/* ========================================= */
 
 const createBtn =
   document.getElementById("createBtn");
@@ -250,8 +341,24 @@ const imagesCard =
 const imagesBox =
   document.getElementById("images");
 
+const videoCard =
+  document.getElementById("videoCard");
 
-function showStatus(message, type = "") {
+const videoPlayer =
+  document.getElementById("videoPlayer");
+
+const downloadVideo =
+  document.getElementById("downloadVideo");
+
+
+/* ========================================= */
+/* STATUS */
+/* ========================================= */
+
+function showStatus(
+  message,
+  type = ""
+) {
 
   statusBox.className =
     "status";
@@ -260,258 +367,430 @@ function showStatus(message, type = "") {
     statusBox.classList.add(type);
   }
 
-  statusBox.textContent = message;
+  statusBox.textContent =
+    message;
 
-  statusBox.classList.remove("hidden");
+  statusBox.classList.remove(
+    "hidden"
+  );
 }
 
+
+/* ========================================= */
+/* RESET */
+/* ========================================= */
 
 function hideResults() {
 
-  storyCard.classList.add("hidden");
+  storyCard.classList.add(
+    "hidden"
+  );
 
-  audioCard.classList.add("hidden");
+  audioCard.classList.add(
+    "hidden"
+  );
 
-  imagesCard.classList.add("hidden");
+  imagesCard.classList.add(
+    "hidden"
+  );
 
-  storyBox.textContent = "";
+  videoCard.classList.add(
+    "hidden"
+  );
 
-  audio.removeAttribute("src");
 
-  imagesBox.innerHTML = "";
+  storyBox.textContent =
+    "";
+
+  audio.removeAttribute(
+    "src"
+  );
+
+  audio.load();
+
+
+  imagesBox.innerHTML =
+    "";
+
+
+  videoPlayer.pause();
+
+  videoPlayer.removeAttribute(
+    "src"
+  );
+
+  videoPlayer.load();
+
+
+  downloadVideo.removeAttribute(
+    "href"
+  );
 }
 
 
-createBtn.addEventListener("click", async () => {
+/* ========================================= */
+/* CREATE STORY */
+/* ========================================= */
 
-  const topic =
-    topicInput.value.trim();
+createBtn.addEventListener(
+  "click",
+  async () => {
 
-  if (!topic) {
+    const topic =
+      topicInput.value.trim();
 
-    showStatus(
-      "Please enter a story idea first.",
-      "error"
-    );
 
-    return;
-  }
+    if (!topic) {
 
-  hideResults();
-
-  createBtn.disabled = true;
-
-  try {
-
-    // ==================================
-    // STEP 1 — CREATE STORY
-    // ==================================
-
-    showStatus(
-      "🧠 Creating the story..."
-    );
-
-    const storyResponse =
-      await fetch(
-        `${API}/api/create-story`,
-        {
-          method: "POST",
-
-          headers: {
-            "Content-Type": "application/json"
-          },
-
-          body: JSON.stringify({
-            topic
-          })
-        }
+      showStatus(
+        "Please enter a story idea first.",
+        "error"
       );
 
-
-    const storyData =
-      await storyResponse.json();
-
-
-    if (!storyResponse.ok ||
-        !storyData.success) {
-
-      throw new Error(
-        storyData.error ||
-        "Story generation failed."
-      );
+      return;
     }
 
 
-    const story =
-      storyData.story;
+    hideResults();
+
+    createBtn.disabled =
+      true;
 
 
-    // Show story immediately
-
-    storyBox.textContent =
-      story;
-
-    storyCard.classList.remove(
-      "hidden"
-    );
+    try {
 
 
-    // ==================================
-    // STEP 2 — CREATE VOICE + IMAGES
-    // ==================================
+      /* ================================= */
+      /* STEP 1 — STORY */
+      /* ================================= */
 
-    showStatus(
-      "🎙️ Generating voice + 🎬 4 cinematic scenes...\n\nThis can take some time."
-    );
-
-
-    const assetsResponse =
-      await fetch(
-        `${API}/api/create-assets`,
-        {
-          method: "POST",
-
-          headers: {
-            "Content-Type": "application/json"
-          },
-
-          body: JSON.stringify({
-            story
-          })
-        }
+      showStatus(
+        "🧠 Creating the story..."
       );
 
 
-    const assetsData =
-      await assetsResponse.json();
+      const storyResponse =
+        await fetch(
+          `${API}/api/create-story`,
+          {
+            method: "POST",
+
+            headers: {
+              "Content-Type":
+                "application/json"
+            },
+
+            body:
+              JSON.stringify({
+                topic
+              })
+          }
+        );
 
 
-    if (!assetsResponse.ok ||
-        !assetsData.success) {
-
-      throw new Error(
-        assetsData.error ||
-        "Asset generation failed."
-      );
-    }
+      const storyData =
+        await storyResponse.json();
 
 
-    // ==================================
-    // AUDIO
-    // ==================================
-
-    if (
-      assetsData.audio &&
-      assetsData.audio.url
-    ) {
-
-      audio.src =
-        assetsData.audio.url;
-
-      audioCard.classList.remove(
-        "hidden"
-      );
-    }
-
-
-    // ==================================
-    // IMAGES
-    // ==================================
-
-    if (
-      Array.isArray(
-        assetsData.images
-      )
-    ) {
-
-      assetsBox:
-      for (
-        const scene
-        of assetsData.images
+      if (
+        !storyResponse.ok ||
+        !storyData.success
       ) {
 
-        const wrapper =
-          document.createElement(
-            "div"
-          );
-
-        wrapper.className =
-          "scene";
-
-
-        const img =
-          document.createElement(
-            "img"
-          );
-
-        img.src =
-          scene.image;
-
-        img.alt =
-          `Scene ${scene.scene}`;
-
-
-        const title =
-          document.createElement(
-            "div"
-          );
-
-        title.className =
-          "scene-title";
-
-        title.textContent =
-          `Scene ${scene.scene}`;
-
-
-        wrapper.appendChild(img);
-
-        wrapper.appendChild(title);
-
-        imagesBox.appendChild(
-          wrapper
+        throw new Error(
+          storyData.error ||
+          "Story generation failed."
         );
+
       }
 
 
-      imagesCard.classList.remove(
+      const story =
+        storyData.story;
+
+
+      if (!story) {
+
+        throw new Error(
+          "No story was returned."
+        );
+
+      }
+
+
+      /* Show story */
+
+      storyBox.textContent =
+        story;
+
+      storyCard.classList.remove(
         "hidden"
       );
+
+
+      /* ================================= */
+      /* STEP 2 — ASSETS + MP4 */
+      /* ================================= */
+
+      showStatus(
+        "🎙️ Generating voice...\n\n" +
+        "🎬 Generating 4 cinematic scenes...\n\n" +
+        "🎥 Preparing MP4 with FFmpeg...\n\n" +
+        "⏳ Please wait..."
+      );
+
+
+      /*
+       * IMPORTANT:
+       *
+       * /api/create-assets does ALL of this:
+       *
+       * Story
+       * ↓
+       * Voice
+       * ↓
+       * 4 Images
+       * ↓
+       * Cloudflare Container
+       * ↓
+       * FFmpeg
+       * ↓
+       * MP4
+       *
+       * The Worker returns the final MP4
+       * inside assetsData.video.base64.
+       */
+
+
+      const assetsResponse =
+        await fetch(
+          `${API}/api/create-assets`,
+          {
+            method: "POST",
+
+            headers: {
+              "Content-Type":
+                "application/json"
+            },
+
+            body:
+              JSON.stringify({
+                story
+              })
+          }
+        );
+
+
+      const assetsData =
+        await assetsResponse.json();
+
+
+      if (
+        !assetsResponse.ok ||
+        !assetsData.success
+      ) {
+
+        throw new Error(
+          assetsData.error ||
+          "Asset generation failed."
+        );
+
+      }
+
+
+      /* ================================= */
+      /* AUDIO */
+      /* ================================= */
+
+      if (
+        assetsData.audio &&
+        assetsData.audio.url
+      ) {
+
+        audio.src =
+          assetsData.audio.url;
+
+        audioCard.classList.remove(
+          "hidden"
+        );
+
+      }
+
+
+      /* ================================= */
+      /* IMAGES */
+      /* ================================= */
+
+      if (
+        Array.isArray(
+          assetsData.images
+        )
+      ) {
+
+        for (
+          const scene
+          of assetsData.images
+        ) {
+
+          const wrapper =
+            document.createElement(
+              "div"
+            );
+
+          wrapper.className =
+            "scene";
+
+
+          const img =
+            document.createElement(
+              "img"
+            );
+
+          img.src =
+            scene.image;
+
+          img.alt =
+            `Scene ${scene.scene}`;
+
+
+          const title =
+            document.createElement(
+              "div"
+            );
+
+          title.className =
+            "scene-title";
+
+          title.textContent =
+            `Scene ${scene.scene}`;
+
+
+          wrapper.appendChild(
+            img
+          );
+
+          wrapper.appendChild(
+            title
+          );
+
+
+          imagesBox.appendChild(
+            wrapper
+          );
+
+        }
+
+
+        imagesCard.classList.remove(
+          "hidden"
+        );
+
+      }
+
+
+      /* ================================= */
+      /* FINAL MP4 */
+      /* ================================= */
+
+      if (
+        assetsData.video &&
+        assetsData.video.base64
+      ) {
+
+
+        showStatus(
+          "🎥 MP4 received from FFmpeg...\n\n" +
+          "⏳ Loading video..."
+        );
+
+
+        const videoSrc =
+          `data:video/mp4;base64,${assetsData.video.base64}`;
+
+
+        videoPlayer.src =
+          videoSrc;
+
+
+        downloadVideo.href =
+          videoSrc;
+
+
+        videoCard.classList.remove(
+          "hidden"
+        );
+
+
+        /* Scroll to video */
+
+        setTimeout(
+          () => {
+
+            videoCard.scrollIntoView({
+              behavior: "smooth",
+              block: "start"
+            });
+
+          },
+          300
+        );
+
+
+        /* Final success */
+
+        showStatus(
+          "✅ VIDEO CREATED!\n\n" +
+          "Story ✓\n" +
+          "Voice ✓\n" +
+          "4 Images ✓\n" +
+          "FFmpeg ✓\n" +
+          "MP4 ✓\n\n" +
+          "🎬 UNKNOWN_FILES.mp4 is ready.",
+          "success"
+        );
+
+
+      } else {
+
+
+        throw new Error(
+          "The Worker completed asset generation, but no MP4 was returned."
+        );
+
+      }
+
+
+    }
+
+    catch (error) {
+
+      console.error(
+        "UNKNOWN FILES ERROR:",
+        error
+      );
+
+
+      showStatus(
+        "❌ ERROR\n\n" +
+        (
+          error.message ||
+          String(error)
+        ),
+        "error"
+      );
+
     }
 
 
-    // ==================================
-    // SUCCESS
-    // ==================================
+    finally {
 
-    showStatus(
-      "✅ REAL ASSETS CREATED!\n\nStory ✓\nVoice ✓\n4 Images ✓\n\nNext step: automatically assemble everything into an MP4.",
-      "success"
-    );
+      createBtn.disabled =
+        false;
+
+    }
 
   }
-
-  catch (error) {
-
-    console.error(error);
-
-    showStatus(
-      "❌ ERROR\n\n" +
-      (
-        error.message ||
-        String(error)
-      ),
-      "error"
-    );
-
-  }
-
-  finally {
-
-    createBtn.disabled = false;
-
-  }
-
-});
+);
 
 </script>
 
