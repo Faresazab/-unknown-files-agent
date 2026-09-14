@@ -65,7 +65,7 @@ var worker_default = {
 
         agent: "UNKNOWN FILES",
 
-        version: "6.0",
+        version: "6.1",
 
         image_model:
           "@cf/black-forest-labs/flux-1-schnell",
@@ -624,16 +624,6 @@ Use EXACTLY:
 
 
           // ==================================================
-          // UNIQUE RANDOM SEED
-          // ==================================================
-
-          const seed =
-            Math.floor(
-              Math.random() * 2000000000
-            ) + 1;
-
-
-          // ==================================================
           // SCENE DIRECTIONS
           // ==================================================
 
@@ -814,22 +804,20 @@ No sexual content.
           );
 
           console.log(
-            `🎲 SEED: ${seed}`
-          );
-
-          console.log(
             "========================================"
           );
 
+
+          // ==================================================
+          // GENERATE IMAGE
+          // ==================================================
 
           const imageResult =
             await generateSafeImage(
 
               env,
 
-              imagePrompt,
-
-              seed
+              imagePrompt
 
             );
 
@@ -867,8 +855,6 @@ No sexual content.
 
             scene:
               i + 1,
-
-            seed,
 
             prompt:
               originalScene,
@@ -1111,8 +1097,7 @@ No sexual content.
 
 async function generateSafeImage(
   env,
-  prompt,
-  seed
+  prompt
 ) {
 
   try {
@@ -1127,9 +1112,7 @@ async function generateSafeImage(
 
         prompt,
 
-        steps: 6,
-
-        seed
+        steps: 6
 
       }
 
@@ -1175,9 +1158,7 @@ async function generateSafeImage(
           prompt:
             safePrompt,
 
-          steps: 6,
-
-          seed
+          steps: 6
 
         }
 
