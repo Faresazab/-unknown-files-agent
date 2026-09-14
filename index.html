@@ -7,6 +7,7 @@
   <title>UNKNOWN FILES AI AGENT</title>
 
   <style>
+
     * {
       box-sizing: border-box;
     }
@@ -177,6 +178,7 @@
     }
 
     @media (max-width: 600px) {
+
       h1 {
         font-size: 32px;
       }
@@ -188,9 +190,13 @@
       .container {
         padding-top: 30px;
       }
+
     }
+
   </style>
+
 </head>
+
 
 <body>
 
@@ -222,7 +228,10 @@
         🎬 CREATE STORY
       </button>
 
-      <div id="status" class="status hidden"></div>
+      <div
+        id="status"
+        class="status hidden"
+      ></div>
 
     </div>
 
@@ -231,11 +240,17 @@
     <!-- STORY -->
     <!-- ========================================= -->
 
-    <div id="storyCard" class="card hidden">
+    <div
+      id="storyCard"
+      class="card hidden"
+    >
 
       <h2>📖 Story</h2>
 
-      <div id="story" class="story"></div>
+      <div
+        id="story"
+        class="story"
+      ></div>
 
     </div>
 
@@ -244,7 +259,10 @@
     <!-- AUDIO -->
     <!-- ========================================= -->
 
-    <div id="audioCard" class="card hidden">
+    <div
+      id="audioCard"
+      class="card hidden"
+    >
 
       <h2>🎙️ Voice</h2>
 
@@ -261,11 +279,17 @@
     <!-- IMAGES -->
     <!-- ========================================= -->
 
-    <div id="imagesCard" class="card hidden">
+    <div
+      id="imagesCard"
+      class="card hidden"
+    >
 
       <h2>🎬 Scenes</h2>
 
-      <div id="images" class="images"></div>
+      <div
+        id="images"
+        class="images"
+      ></div>
 
     </div>
 
@@ -274,7 +298,10 @@
     <!-- FINAL VIDEO -->
     <!-- ========================================= -->
 
-    <div id="videoCard" class="card hidden">
+    <div
+      id="videoCard"
+      class="card hidden"
+    >
 
       <h2>🎥 Final MP4</h2>
 
@@ -289,17 +316,16 @@
 
       </div>
 
+
       <a
         id="downloadVideo"
         class="download-btn"
         href="#"
-        download="UNKNOWN_FILES.mp4"
       >
         ⬇️ DOWNLOAD MP4
       </a>
 
     </div>
-
 
   </div>
 
@@ -352,6 +378,13 @@ const downloadVideo =
 
 
 /* ========================================= */
+/* VIDEO OBJECT URL */
+/* ========================================= */
+
+let currentVideoURL = null;
+
+
+/* ========================================= */
 /* STATUS */
 /* ========================================= */
 
@@ -364,7 +397,11 @@ function showStatus(
     "status";
 
   if (type) {
-    statusBox.classList.add(type);
+
+    statusBox.classList.add(
+      type
+    );
+
   }
 
   statusBox.textContent =
@@ -373,6 +410,7 @@ function showStatus(
   statusBox.classList.remove(
     "hidden"
   );
+
 }
 
 
@@ -402,6 +440,7 @@ function hideResults() {
   storyBox.textContent =
     "";
 
+
   audio.removeAttribute(
     "src"
   );
@@ -425,6 +464,89 @@ function hideResults() {
   downloadVideo.removeAttribute(
     "href"
   );
+
+
+  /* ========================================= */
+  /* CLEAN OLD BLOB URL */
+  /* ========================================= */
+
+  if (currentVideoURL) {
+
+    URL.revokeObjectURL(
+      currentVideoURL
+    );
+
+    currentVideoURL =
+      null;
+
+  }
+
+}
+
+
+/* ========================================= */
+/* BASE64 → BLOB */
+/* ========================================= */
+
+function base64ToBlob(
+  base64,
+  mimeType
+) {
+
+  const byteCharacters =
+    atob(base64);
+
+  const sliceSize =
+    1024 * 1024;
+
+  const byteArrays = [];
+
+
+  for (
+    let offset = 0;
+    offset < byteCharacters.length;
+    offset += sliceSize
+  ) {
+
+    const slice =
+      byteCharacters.slice(
+        offset,
+        offset + sliceSize
+      );
+
+
+    const byteNumbers =
+      new Uint8Array(
+        slice.length
+      );
+
+
+    for (
+      let i = 0;
+      i < slice.length;
+      i++
+    ) {
+
+      byteNumbers[i] =
+        slice.charCodeAt(i);
+
+    }
+
+
+    byteArrays.push(
+      byteNumbers
+    );
+
+  }
+
+
+  return new Blob(
+    byteArrays,
+    {
+      type: mimeType
+    }
+  );
+
 }
 
 
@@ -433,7 +555,9 @@ function hideResults() {
 /* ========================================= */
 
 createBtn.addEventListener(
+
   "click",
+
   async () => {
 
     const topic =
@@ -448,10 +572,12 @@ createBtn.addEventListener(
       );
 
       return;
+
     }
 
 
     hideResults();
+
 
     createBtn.disabled =
       true;
@@ -473,7 +599,9 @@ createBtn.addEventListener(
         await fetch(
           `${API}/api/create-story`,
           {
-            method: "POST",
+
+            method:
+              "POST",
 
             headers: {
               "Content-Type":
@@ -484,6 +612,7 @@ createBtn.addEventListener(
               JSON.stringify({
                 topic
               })
+
           }
         );
 
@@ -518,10 +647,13 @@ createBtn.addEventListener(
       }
 
 
-      /* Show story */
+      /* ================================= */
+      /* SHOW STORY */
+      /* ================================= */
 
       storyBox.textContent =
         story;
+
 
       storyCard.classList.remove(
         "hidden"
@@ -533,40 +665,25 @@ createBtn.addEventListener(
       /* ================================= */
 
       showStatus(
+
         "🎙️ Generating voice...\n\n" +
+
         "🎬 Generating 4 cinematic scenes...\n\n" +
+
         "🎥 Preparing MP4 with FFmpeg...\n\n" +
+
         "⏳ Please wait..."
+
       );
-
-
-      /*
-       * IMPORTANT:
-       *
-       * /api/create-assets does ALL of this:
-       *
-       * Story
-       * ↓
-       * Voice
-       * ↓
-       * 4 Images
-       * ↓
-       * Cloudflare Container
-       * ↓
-       * FFmpeg
-       * ↓
-       * MP4
-       *
-       * The Worker returns the final MP4
-       * inside assetsData.video.base64.
-       */
 
 
       const assetsResponse =
         await fetch(
           `${API}/api/create-assets`,
           {
-            method: "POST",
+
+            method:
+              "POST",
 
             headers: {
               "Content-Type":
@@ -577,6 +694,7 @@ createBtn.addEventListener(
               JSON.stringify({
                 story
               })
+
           }
         );
 
@@ -610,6 +728,7 @@ createBtn.addEventListener(
         audio.src =
           assetsData.audio.url;
 
+
         audioCard.classList.remove(
           "hidden"
         );
@@ -637,6 +756,7 @@ createBtn.addEventListener(
               "div"
             );
 
+
           wrapper.className =
             "scene";
 
@@ -646,8 +766,10 @@ createBtn.addEventListener(
               "img"
             );
 
+
           img.src =
             scene.image;
+
 
           img.alt =
             `Scene ${scene.scene}`;
@@ -658,8 +780,10 @@ createBtn.addEventListener(
               "div"
             );
 
+
           title.className =
             "scene-title";
+
 
           title.textContent =
             `Scene ${scene.scene}`;
@@ -668,6 +792,7 @@ createBtn.addEventListener(
           wrapper.appendChild(
             img
           );
+
 
           wrapper.appendChild(
             title
@@ -699,36 +824,102 @@ createBtn.addEventListener(
 
 
         showStatus(
+
           "🎥 MP4 received from FFmpeg...\n\n" +
-          "⏳ Loading video..."
+
+          "⏳ Preparing video download..."
+
         );
 
 
-        const videoSrc =
-          `data:video/mp4;base64,${assetsData.video.base64}`;
+        /* ================================= */
+        /* CREATE REAL BLOB */
+        /* ================================= */
 
+        const videoBlob =
+          base64ToBlob(
+            assetsData.video.base64,
+            "video/mp4"
+          );
+
+
+        console.log(
+          "🎥 Video Blob size:",
+          videoBlob.size
+        );
+
+
+        if (
+          !videoBlob ||
+          videoBlob.size === 0
+        ) {
+
+          throw new Error(
+            "The generated MP4 is empty."
+          );
+
+        }
+
+
+        /* ================================= */
+        /* CREATE OBJECT URL */
+        /* ================================= */
+
+        currentVideoURL =
+          URL.createObjectURL(
+            videoBlob
+          );
+
+
+        /* ================================= */
+        /* VIDEO PLAYER */
+        /* ================================= */
 
         videoPlayer.src =
-          videoSrc;
+          currentVideoURL;
 
+
+        videoPlayer.load();
+
+
+        /* ================================= */
+        /* DOWNLOAD */
+        /* ================================= */
 
         downloadVideo.href =
-          videoSrc;
+          currentVideoURL;
 
+
+        downloadVideo.download =
+          "UNKNOWN_FILES.mp4";
+
+
+        downloadVideo.target =
+          "_blank";
+
+
+        /* ================================= */
+        /* SHOW VIDEO */
+        /* ================================= */
 
         videoCard.classList.remove(
           "hidden"
         );
 
 
-        /* Scroll to video */
+        /* ================================= */
+        /* SCROLL TO VIDEO */
+        /* ================================= */
 
         setTimeout(
           () => {
 
             videoCard.scrollIntoView({
-              behavior: "smooth",
-              block: "start"
+              behavior:
+                "smooth",
+
+              block:
+                "start"
             });
 
           },
@@ -736,25 +927,37 @@ createBtn.addEventListener(
         );
 
 
-        /* Final success */
+        /* ================================= */
+        /* SUCCESS */
+        /* ================================= */
 
         showStatus(
+
           "✅ VIDEO CREATED!\n\n" +
+
           "Story ✓\n" +
+
           "Voice ✓\n" +
+
           "4 Images ✓\n" +
+
           "FFmpeg ✓\n" +
+
           "MP4 ✓\n\n" +
+
           "🎬 UNKNOWN_FILES.mp4 is ready.",
+
           "success"
+
         );
 
 
       } else {
 
-
         throw new Error(
+
           "The Worker completed asset generation, but no MP4 was returned."
+
         );
 
       }
@@ -764,6 +967,7 @@ createBtn.addEventListener(
 
     catch (error) {
 
+
       console.error(
         "UNKNOWN FILES ERROR:",
         error
@@ -771,12 +975,16 @@ createBtn.addEventListener(
 
 
       showStatus(
+
         "❌ ERROR\n\n" +
+
         (
           error.message ||
           String(error)
         ),
+
         "error"
+
       );
 
     }
@@ -790,6 +998,7 @@ createBtn.addEventListener(
     }
 
   }
+
 );
 
 </script>
