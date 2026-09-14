@@ -37,7 +37,15 @@ async function createVideo(body) {
 
 
   console.log(
-    "🎬 Starting UNKNOWN FILES video render..."
+    "========================================"
+  );
+
+  console.log(
+    "🎬 UNKNOWN FILES VIDEO RENDER"
+  );
+
+  console.log(
+    "========================================"
   );
 
 
@@ -80,70 +88,200 @@ async function createVideo(body) {
 
 
   // ==================================================
-  // FFMPEG
+  // CREATE EACH SCENE AS A SEPARATE MP4
   // ==================================================
 
   console.log(
-    "🎥 Rendering 4 separate scenes..."
+    "🎥 Creating 4 independent scene videos..."
+  );
+
+
+  for (
+    let i = 1;
+    i <= 4;
+    i++
+  ) {
+
+    const input =
+      `/tmp/image${i}.jpg`;
+
+    const output =
+      `/tmp/scene${i}.mp4`;
+
+
+    console.log(
+      `🎬 Rendering SCENE ${i}...`
+    );
+
+
+    await runFFmpeg([
+
+      "-y",
+
+      // ==================================================
+      // INPUT IMAGE
+      // ==================================================
+
+      "-loop",
+      "1",
+
+      "-framerate",
+      "30",
+
+      "-i",
+      input,
+
+
+      // ==================================================
+      // EXACTLY 12 SECONDS
+      // ==================================================
+
+      "-frames:v",
+      "360",
+
+
+      // ==================================================
+      // VERTICAL VIDEO
+      // ==================================================
+
+      "-vf",
+
+      "scale=1080:1920:force_original_aspect_ratio=increase," +
+      "crop=1080:1920," +
+      "setsar=1," +
+      "format=yuv420p",
+
+
+      // ==================================================
+      // VIDEO ENCODING
+      // ==================================================
+
+      "-c:v",
+      "libx264",
+
+      "-preset",
+      "veryfast",
+
+      "-crf",
+      "23",
+
+      "-pix_fmt",
+      "yuv420p",
+
+      "-r",
+      "30",
+
+
+      // ==================================================
+      // NO AUDIO IN SCENE FILES
+      // ==================================================
+
+      "-an",
+
+
+      // ==================================================
+      // OUTPUT
+      // ==================================================
+
+      output
+
+    ]);
+
+
+    console.log(
+      `✅ SCENE ${i} MP4 created`
+    );
+
+  }
+
+
+  // ==================================================
+  // CREATE CONCAT LIST
+  // ==================================================
+
+  console.log(
+    "🔗 Creating scene concat list..."
+  );
+
+
+  const concatList = `
+
+file '/tmp/scene1.mp4'
+
+file '/tmp/scene2.mp4'
+
+file '/tmp/scene3.mp4'
+
+file '/tmp/scene4.mp4'
+
+`.trim();
+
+
+  await writeFile(
+    "/tmp/concat.txt",
+    concatList
+  );
+
+
+  console.log(
+    "✅ Concat list created"
+  );
+
+
+  // ==================================================
+  // CONCAT 4 VIDEO FILES
+  // ==================================================
+
+  console.log(
+    "🎞️ Joining SCENE 1 + 2 + 3 + 4..."
   );
 
 
   await runFFmpeg([
 
-    // ==================================================
-    // IMAGE 1
-    // ==================================================
+    "-y",
 
-    "-loop",
-    "1",
+    "-f",
+    "concat",
 
-    "-framerate",
-    "30",
+    "-safe",
+    "0",
 
     "-i",
-    "/tmp/image1.jpg",
+    "/tmp/concat.txt",
 
+    "-c",
+    "copy",
+
+    "/tmp/video-no-audio.mp4"
+
+  ]);
+
+
+  console.log(
+    "✅ Four scenes joined successfully"
+  );
+
+
+  // ==================================================
+  // ADD AUDIO
+  // ==================================================
+
+  console.log(
+    "🎙️ Adding voice audio..."
+  );
+
+
+  await runFFmpeg([
+
+    "-y",
 
     // ==================================================
-    // IMAGE 2
+    // VIDEO
     // ==================================================
-
-    "-loop",
-    "1",
-
-    "-framerate",
-    "30",
 
     "-i",
-    "/tmp/image2.jpg",
-
-
-    // ==================================================
-    // IMAGE 3
-    // ==================================================
-
-    "-loop",
-    "1",
-
-    "-framerate",
-    "30",
-
-    "-i",
-    "/tmp/image3.jpg",
-
-
-    // ==================================================
-    // IMAGE 4
-    // ==================================================
-
-    "-loop",
-    "1",
-
-    "-framerate",
-    "30",
-
-    "-i",
-    "/tmp/image4.jpg",
+    "/tmp/video-no-audio.mp4",
 
 
     // ==================================================
@@ -155,127 +293,31 @@ async function createVideo(body) {
 
 
     // ==================================================
-    // FILTER
-    // ==================================================
-
-    "-filter_complex",
-
-`
-[0:v]
-scale=1080:1920:force_original_aspect_ratio=increase,
-crop=1080:1920,
-setsar=1,
-trim=duration=12,
-setpts=PTS-STARTPTS,
-zoompan=
-z='min(zoom+0.0008,1.08)':
-x='iw/2-(iw/zoom/2)':
-y='ih/2-(ih/zoom/2)':
-d=1:
-s=1080x1920:
-fps=30,
-setsar=1
-[v0];
-
-[1:v]
-scale=1080:1920:force_original_aspect_ratio=increase,
-crop=1080:1920,
-setsar=1,
-trim=duration=12,
-setpts=PTS-STARTPTS,
-zoompan=
-z='min(zoom+0.0008,1.08)':
-x='iw/2-(iw/zoom/2)':
-y='ih/2-(ih/zoom/2)':
-d=1:
-s=1080x1920:
-fps=30,
-setsar=1
-[v1];
-
-[2:v]
-scale=1080:1920:force_original_aspect_ratio=increase,
-crop=1080:1920,
-setsar=1,
-trim=duration=12,
-setpts=PTS-STARTPTS,
-zoompan=
-z='min(zoom+0.0008,1.08)':
-x='iw/2-(iw/zoom/2)':
-y='ih/2-(ih/zoom/2)':
-d=1:
-s=1080x1920:
-fps=30,
-setsar=1
-[v2];
-
-[3:v]
-scale=1080:1920:force_original_aspect_ratio=increase,
-crop=1080:1920,
-setsar=1,
-trim=duration=12,
-setpts=PTS-STARTPTS,
-zoompan=
-z='min(zoom+0.0008,1.08)':
-x='iw/2-(iw/zoom/2)':
-y='ih/2-(ih/zoom/2)':
-d=1:
-s=1080x1920:
-fps=30,
-setsar=1
-[v3];
-
-[v0][v1][v2][v3]
-concat=n=4:v=1:a=0,
-format=yuv420p
-[v]
-`,
-
-    // ==================================================
-    // VIDEO MAP
+    // MAP VIDEO
     // ==================================================
 
     "-map",
-    "[v]",
+    "0:v:0",
 
 
     // ==================================================
-    // AUDIO MAP
+    // MAP AUDIO
     // ==================================================
 
     "-map",
-    "4:a:0",
+    "1:a:0",
 
 
     // ==================================================
-    // AUDIO DURATION
-    // ==================================================
-
-    "-shortest",
-
-
-    // ==================================================
-    // VIDEO
+    // COPY VIDEO
     // ==================================================
 
     "-c:v",
-    "libx264",
-
-    "-preset",
-    "veryfast",
-
-    "-crf",
-    "23",
-
-    "-r",
-    "30",
-
-    "-pix_fmt",
-    "yuv420p",
+    "copy",
 
 
     // ==================================================
-    // AUDIO
+    // ENCODE AUDIO
     // ==================================================
 
     "-c:a",
@@ -286,7 +328,14 @@ format=yuv420p
 
 
     // ==================================================
-    // MOV
+    // STOP WHEN AUDIO ENDS
+    // ==================================================
+
+    "-shortest",
+
+
+    // ==================================================
+    // STREAMING / FAST START
     // ==================================================
 
     "-movflags",
@@ -294,10 +343,8 @@ format=yuv420p
 
 
     // ==================================================
-    // OUTPUT
+    // FINAL MP4
     // ==================================================
-
-    "-y",
 
     "/tmp/UNKNOWN_FILES.mp4"
 
@@ -305,12 +352,20 @@ format=yuv420p
 
 
   console.log(
-    "✅ 4-scene MP4 created successfully"
+    "========================================"
+  );
+
+  console.log(
+    "✅ FINAL UNKNOWN_FILES.mp4 CREATED"
+  );
+
+  console.log(
+    "========================================"
   );
 
 
   // ==================================================
-  // READ VIDEO
+  // READ FINAL VIDEO
   // ==================================================
 
   const video =
@@ -320,8 +375,20 @@ format=yuv420p
 
 
   console.log(
-    `🎬 MP4 size: ${video.length} bytes`
+    `🎬 FINAL MP4 SIZE: ${video.length} bytes`
   );
+
+
+  if (
+    !video ||
+    video.length === 0
+  ) {
+
+    throw new Error(
+      "Final MP4 is empty."
+    );
+
+  }
 
 
   return video;
