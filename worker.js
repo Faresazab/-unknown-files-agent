@@ -65,7 +65,7 @@ var worker_default = {
 
         agent: "UNKNOWN FILES",
 
-        version: "5.2",
+        version: "6.0",
 
         image_model:
           "@cf/black-forest-labs/flux-1-schnell",
@@ -215,7 +215,7 @@ Return ONLY the story.
 
 
     // ==================================================
-    // CREATE ASSETS + GENERATE MP4
+    // CREATE ASSETS
     // ==================================================
 
     if (
@@ -350,20 +350,23 @@ ${story}
 
 Create EXACTLY 4 visual scenes for a vertical YouTube Short.
 
-IMPORTANT:
-Each scene MUST represent a different moment in the story.
+Each scene MUST represent a different moment.
 
-The four scenes MUST have clearly different:
+The four scenes MUST be visually different.
+
+They MUST have different:
 
 - camera composition
+- camera angle
 - character pose
 - character action
-- environment details
-- location position
 - facial expression
+- character position
+- environment details
+- lighting
 - visual event
 
-Do NOT describe the same image four times.
+DO NOT describe the same image four times.
 
 CHARACTER CONSISTENCY:
 
@@ -376,15 +379,14 @@ Keep consistent:
 - hairstyle
 - clothing
 - face
-- environment
 - cinematic visual identity
 
-The character stays the same, BUT the ACTION and COMPOSITION must change significantly between scenes.
+The character stays the same, BUT the ACTION and COMPOSITION must change significantly.
 
 SCENE PROGRESSION:
 
 Scene 1:
-Introduce the location and the main character.
+Establish the location and introduce the character.
 
 Scene 2:
 Show the mysterious event beginning.
@@ -393,7 +395,7 @@ Scene 3:
 Show the situation becoming more disturbing.
 
 Scene 4:
-Show the twist / final mysterious reveal.
+Show the twist or final mysterious reveal.
 
 STYLE:
 
@@ -418,13 +420,7 @@ STYLE:
 - no sexual content
 - no nudity
 
-VERY IMPORTANT:
-
 Return ONLY valid JSON.
-
-No markdown.
-No code fences.
-No explanation.
 
 Use EXACTLY:
 
@@ -582,52 +578,65 @@ Use EXACTLY:
 
 
           // ==================================================
-          // IMPORTANT:
-          // FORCE EACH SCENE TO BE VISUALLY DIFFERENT
+          // UNIQUE SEED
           // ==================================================
 
-          const sceneDirection = [
+          const seed =
+            Math.floor(
+              Math.random() * 2000000000
+            ) + 1;
+
+
+          // ==================================================
+          // SCENE-SPECIFIC DIRECTION
+          // ==================================================
+
+          const sceneDirections = [
 
             `
 SCENE 1 — ESTABLISHING SHOT.
 
 Show the main character entering or standing in the main location.
 
-Wide cinematic composition.
+Use a WIDE cinematic shot.
 
-Clearly establish the environment.
+The environment must be clearly visible.
 
-The character should be visible and relatively small in frame.
+The character should be relatively small in frame.
 
-This must look like the beginning of the story.
+This is the beginning of the story.
 `,
 
             `
 SCENE 2 — MYSTERIOUS EVENT.
 
-Show the same character reacting to the mysterious event.
+Show the SAME character reacting to the mysterious event.
 
-Medium cinematic shot.
+Use a MEDIUM cinematic shot.
 
-Change the camera angle significantly from Scene 1.
+Use a completely different camera angle from Scene 1.
 
-Change the character's pose and facial expression.
+Change the character's pose.
 
-Show a new visual event happening.
+Change the facial expression.
+
+Show a NEW visual event.
 `,
 
             `
 SCENE 3 — ESCALATION.
 
-Show the same character much closer to the disturbing situation.
+Show the SAME character much closer to the disturbing situation.
 
-Close or medium-close cinematic shot.
+Use a CLOSE or MEDIUM-CLOSE cinematic shot.
 
 Use a different camera angle.
 
-The character must have a different pose and expression.
+Change the character's pose.
 
-The environment should contain new visual information.
+Change the facial expression.
+
+Add NEW environmental information.
 
 This must clearly look like a different moment.
 `,
@@ -635,31 +644,39 @@ This must clearly look like a different moment.
             `
 SCENE 4 — FINAL REVEAL.
 
-Show the visual twist or mysterious final reveal.
+Show the final mysterious reveal or twist.
 
 Use a dramatically different composition.
 
-Different camera angle.
+Use a different camera angle.
 
-Different character position.
+Place the character differently in the frame.
 
-Different action.
+Change the action and expression.
 
-Create the strongest and most mysterious image of the four scenes.
+Create the strongest and most mysterious image.
 `
 
-          ][i];
+          ];
 
+
+          const sceneDirection =
+            sceneDirections[i];
+
+
+          // ==================================================
+          // IMAGE PROMPT
+          // ==================================================
 
           const imagePrompt = `
 
-UNKNOWN FILES — CINEMATIC SCENE ${i + 1} OF 4.
+UNKNOWN FILES — SCENE ${i + 1} OF 4.
 
-THIS MUST BE A COMPLETELY NEW IMAGE.
+THIS IS A NEW CINEMATIC FRAME.
 
-DO NOT REUSE THE COMPOSITION OF ANOTHER SCENE.
+DO NOT REUSE ANOTHER SCENE'S COMPOSITION.
 
-DO NOT CREATE A STATIC REPEAT OF THE SAME IMAGE.
+DO NOT CREATE A DUPLICATE IMAGE.
 
 STORY SCENE:
 
@@ -669,12 +686,19 @@ SCENE DIRECTION:
 
 ${sceneDirection}
 
-IMPORTANT:
+VISUAL CONTINUITY:
 
-The main character must remain visually consistent
-with the other scenes.
+The main character must remain visually consistent.
 
-However, the image itself MUST change.
+Keep:
+
+- same person
+- same face
+- same hairstyle
+- same clothing
+- same general visual identity
+
+BUT THIS FRAME MUST BE VISUALLY DIFFERENT.
 
 Change:
 
@@ -684,20 +708,25 @@ Change:
 - character pose
 - facial expression
 - action
-- background details
+- background
 - lighting emphasis
 - visual event
 
-Keep the same character identity and clothing,
-but create a completely different cinematic moment.
+IMPORTANT:
 
-Vertical cinematic composition.
+This is Scene ${i + 1}.
 
-Portrait 9:16.
+The image must look like a different moment in a cinematic sequence.
+
+Vertical 9:16.
 
 Realistic professional photography.
 
 Dark mysterious psychological suspense atmosphere.
+
+Dramatic cinematic lighting.
+
+Shallow depth of field.
 
 No text.
 
@@ -723,16 +752,34 @@ No sexual content.
 
 
           console.log(
-            `🎬 Generating UNIQUE IMAGE for SCENE ${i + 1}`
+            `========================================`
           );
 
+          console.log(
+            `🎬 SCENE ${i + 1}`
+          );
+
+          console.log(
+            `🎲 UNIQUE SEED: ${seed}`
+          );
+
+          console.log(
+            `========================================`
+          );
+
+
+          // ==================================================
+          // GENERATE IMAGE WITH UNIQUE SEED
+          // ==================================================
 
           const imageResult =
             await generateSafeImage(
 
               env,
 
-              imagePrompt
+              imagePrompt,
+
+              seed
 
             );
 
@@ -757,10 +804,21 @@ No sexual content.
           }
 
 
+          console.log(
+            `✅ Scene ${i + 1} image generated`
+          );
+
+          console.log(
+            `📦 Image characters: ${base64Image.length}`
+          );
+
+
           images.push({
 
             scene:
               i + 1,
+
+            seed,
 
             prompt:
               originalScene,
@@ -774,8 +832,13 @@ No sexual content.
 
 
         // ==================================================
-        // 5. SEND IMAGES + AUDIO TO FFMPEG CONTAINER
+        // 5. SEND IMAGES + AUDIO TO VIDEO CONTAINER
         // ==================================================
+
+        console.log(
+          "🎥 Sending 4 images to video container..."
+        );
+
 
         const container =
           getContainer(
@@ -850,6 +913,23 @@ No sexual content.
           await renderResponse.arrayBuffer();
 
 
+        if (
+          !videoBuffer ||
+          videoBuffer.byteLength === 0
+        ) {
+
+          throw new Error(
+            "Container returned an empty MP4."
+          );
+
+        }
+
+
+        console.log(
+          `🎥 Final MP4 bytes: ${videoBuffer.byteLength}`
+        );
+
+
         const videoBase64 =
           arrayBufferToBase64(
             videoBuffer
@@ -920,6 +1000,12 @@ No sexual content.
 
       } catch (error) {
 
+        console.error(
+          "UNKNOWN FILES ERROR:",
+          error
+        );
+
+
         return json({
 
           success: false,
@@ -964,7 +1050,8 @@ No sexual content.
 
 async function generateSafeImage(
   env,
-  prompt
+  prompt,
+  seed
 ) {
 
   try {
@@ -979,7 +1066,9 @@ async function generateSafeImage(
 
         prompt,
 
-        steps: 6
+        steps: 6,
+
+        seed
 
       }
 
@@ -1020,7 +1109,9 @@ async function generateSafeImage(
           prompt:
             safePrompt,
 
-          steps: 6
+          steps: 6,
+
+          seed
 
         }
 
