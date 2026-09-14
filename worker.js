@@ -174,7 +174,11 @@ Return ONLY the story.
 
 
         const story =
-          extractAIText(result);
+          result?.response ||
+          result?.result?.response ||
+          result?.content ||
+          result?.result?.content ||
+          "";
 
 
         if (!story) {
