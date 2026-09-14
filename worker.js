@@ -323,9 +323,11 @@ Return ONLY the story.
 
 
           story =
-            extractAIText(
-              storyResult
-            );
+            storyResult?.response ||
+            storyResult?.result?.response ||
+            storyResult?.content ||
+            storyResult?.result?.content ||
+            "";
 
 
           if (!story) {
