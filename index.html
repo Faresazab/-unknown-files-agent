@@ -1,10 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <title>UNKNOWN FILES AI AGENT</title>
+<head>
+
+  <meta charset="UTF-8" />
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  />
+
+  <title>
+    UNKNOWN FILES AI AGENT
+  </title>
+
 
   <style>
 
@@ -12,183 +21,416 @@
       box-sizing: border-box;
     }
 
+
     body {
+
       margin: 0;
-      font-family: Arial, Helvetica, sans-serif;
+
+      font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
       background: #08090d;
+
       color: white;
+
       min-height: 100vh;
+
     }
+
 
     .container {
-      width: min(900px, 92%);
-      margin: 0 auto;
-      padding: 50px 0 80px;
+
+      width:
+        min(900px, 92%);
+
+      margin:
+        0 auto;
+
+      padding:
+        50px 0 80px;
+
     }
+
 
     h1 {
+
       font-size: 42px;
+
       margin-bottom: 8px;
+
     }
+
 
     .subtitle {
+
       color: #999;
+
       margin-bottom: 40px;
+
       font-size: 17px;
+
     }
+
 
     .card {
-      background: #11131a;
-      border: 1px solid #272a34;
-      border-radius: 20px;
-      padding: 25px;
-      margin-bottom: 25px;
+
+      background:
+        #11131a;
+
+      border:
+        1px solid #272a34;
+
+      border-radius:
+        20px;
+
+      padding:
+        25px;
+
+      margin-bottom:
+        25px;
+
     }
+
 
     label {
-      display: block;
-      margin-bottom: 10px;
-      font-weight: bold;
+
+      display:
+        block;
+
+      margin-bottom:
+        10px;
+
+      font-weight:
+        bold;
+
     }
+
 
     textarea {
-      width: 100%;
-      min-height: 130px;
-      background: #08090d;
-      color: white;
-      border: 1px solid #30333d;
-      border-radius: 14px;
-      padding: 15px;
-      font-size: 16px;
-      resize: vertical;
-      outline: none;
+
+      width:
+        100%;
+
+      min-height:
+        130px;
+
+      background:
+        #08090d;
+
+      color:
+        white;
+
+      border:
+        1px solid #30333d;
+
+      border-radius:
+        14px;
+
+      padding:
+        15px;
+
+      font-size:
+        16px;
+
+      resize:
+        vertical;
+
+      outline:
+        none;
+
     }
+
 
     textarea:focus {
-      border-color: #777;
+
+      border-color:
+        #777;
+
     }
+
 
     button {
-      width: 100%;
-      margin-top: 18px;
-      padding: 18px;
-      border: 0;
-      border-radius: 14px;
-      font-size: 18px;
-      font-weight: bold;
-      cursor: pointer;
-      background: white;
-      color: black;
+
+      width:
+        100%;
+
+      margin-top:
+        18px;
+
+      padding:
+        18px;
+
+      border:
+        0;
+
+      border-radius:
+        14px;
+
+      font-size:
+        18px;
+
+      font-weight:
+        bold;
+
+      cursor:
+        pointer;
+
+      background:
+        white;
+
+      color:
+        black;
+
     }
+
 
     button:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
+
+      opacity:
+        0.5;
+
+      cursor:
+        not-allowed;
+
     }
+
 
     .status {
-      margin-top: 20px;
-      padding: 16px;
-      border-radius: 12px;
-      background: #191b23;
-      color: #ccc;
-      white-space: pre-wrap;
-      line-height: 1.5;
+
+      margin-top:
+        20px;
+
+      padding:
+        16px;
+
+      border-radius:
+        12px;
+
+      background:
+        #191b23;
+
+      color:
+        #ccc;
+
+      white-space:
+        pre-wrap;
+
+      line-height:
+        1.5;
+
     }
+
 
     .story {
-      line-height: 1.7;
-      color: #ddd;
-      white-space: pre-wrap;
+
+      line-height:
+        1.7;
+
+      color:
+        #ddd;
+
+      white-space:
+        pre-wrap;
+
     }
+
 
     .audio {
-      width: 100%;
-      margin-top: 15px;
+
+      width:
+        100%;
+
+      margin-top:
+        15px;
+
     }
+
 
     .images {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 15px;
-      margin-top: 20px;
+
+      display:
+        grid;
+
+      grid-template-columns:
+        repeat(2, 1fr);
+
+      gap:
+        15px;
+
+      margin-top:
+        20px;
+
     }
+
 
     .scene {
-      background: #08090d;
-      border-radius: 14px;
-      overflow: hidden;
-      border: 1px solid #292c35;
+
+      background:
+        #08090d;
+
+      border-radius:
+        14px;
+
+      overflow:
+        hidden;
+
+      border:
+        1px solid #292c35;
+
     }
+
 
     .scene img {
-      width: 100%;
-      display: block;
+
+      width:
+        100%;
+
+      display:
+        block;
+
     }
+
 
     .scene-title {
-      padding: 12px;
-      color: #aaa;
-      font-size: 14px;
+
+      padding:
+        12px;
+
+      color:
+        #aaa;
+
+      font-size:
+        14px;
+
     }
+
 
     .video-wrapper {
-      margin-top: 20px;
-      background: #08090d;
-      border-radius: 16px;
-      overflow: hidden;
-      border: 1px solid #292c35;
+
+      margin-top:
+        20px;
+
+      background:
+        #08090d;
+
+      border-radius:
+        16px;
+
+      overflow:
+        hidden;
+
+      border:
+        1px solid #292c35;
+
     }
+
 
     .video-wrapper video {
-      width: 100%;
-      display: block;
-      max-height: 750px;
-      background: black;
+
+      width:
+        100%;
+
+      display:
+        block;
+
+      max-height:
+        750px;
+
+      background:
+        black;
+
     }
+
 
     .download-btn {
-      display: block;
-      width: 100%;
-      margin-top: 18px;
-      padding: 17px;
-      border-radius: 14px;
-      background: white;
-      color: black;
-      text-align: center;
-      text-decoration: none;
-      font-weight: bold;
-      font-size: 17px;
+
+      display:
+        block;
+
+      width:
+        100%;
+
+      margin-top:
+        18px;
+
+      padding:
+        17px;
+
+      border-radius:
+        14px;
+
+      background:
+        white;
+
+      color:
+        black;
+
+      text-align:
+        center;
+
+      text-decoration:
+        none;
+
+      font-weight:
+        bold;
+
+      font-size:
+        17px;
+
     }
+
 
     .hidden {
-      display: none;
+
+      display:
+        none;
+
     }
+
 
     .success {
-      color: #7cff9b;
+
+      color:
+        #7cff9b;
+
     }
+
 
     .error {
-      color: #ff7777;
+
+      color:
+        #ff7777;
+
     }
 
-    .rendering {
-      color: #ffd166;
-    }
 
-    @media (max-width: 600px) {
+    @media (
+      max-width: 600px
+    ) {
 
       h1 {
-        font-size: 32px;
+
+        font-size:
+          32px;
+
       }
+
 
       .images {
-        grid-template-columns: 1fr;
+
+        grid-template-columns:
+          1fr;
+
       }
 
+
       .container {
-        padding-top: 30px;
+
+        padding-top:
+          30px;
+
       }
 
     }
@@ -200,52 +442,69 @@
 
 <body>
 
+
   <div class="container">
 
-    <h1>UNKNOWN FILES</h1>
+
+    <h1>
+      UNKNOWN FILES
+    </h1>
+
 
     <div class="subtitle">
-      AI-powered mystery & psychological horror video agent
+
+      AI-powered mystery &
+      psychological horror
+      video agent
+
     </div>
 
 
-    <!-- ========================================= -->
-    <!-- INPUT -->
-    <!-- ========================================= -->
+    <!-- STORY INPUT -->
 
     <div class="card">
 
+
       <label for="topic">
+
         Story idea
+
       </label>
+
 
       <textarea
         id="topic"
         placeholder="Example: A security camera recorded a man entering an abandoned house, but nobody ever saw him leave."
       ></textarea>
 
+
       <button id="createBtn">
+
         🎬 CREATE STORY
+
       </button>
+
 
       <div
         id="status"
         class="status hidden"
       ></div>
 
+
     </div>
 
 
-    <!-- ========================================= -->
     <!-- STORY -->
-    <!-- ========================================= -->
 
     <div
       id="storyCard"
       class="card hidden"
     >
 
-      <h2>📖 Story</h2>
+      <h2>
+        📖 Story
+      </h2>
+
 
       <div
         id="story"
@@ -255,16 +514,17 @@
     </div>
 
 
-    <!-- ========================================= -->
     <!-- AUDIO -->
-    <!-- ========================================= -->
 
     <div
       id="audioCard"
       class="card hidden"
     >
 
-      <h2>🎙️ Voice</h2>
+      <h2>
+        🎙️ Voice
+      </h2>
+
 
       <audio
         id="audio"
@@ -275,16 +535,17 @@
     </div>
 
 
-    <!-- ========================================= -->
     <!-- IMAGES -->
-    <!-- ========================================= -->
 
     <div
       id="imagesCard"
       class="card hidden"
     >
 
-      <h2>🎬 Scenes</h2>
+      <h2>
+        🎬 Generated Scenes
+      </h2>
+
 
       <div
         id="images"
@@ -294,18 +555,21 @@
     </div>
 
 
-    <!-- ========================================= -->
-    <!-- FINAL VIDEO -->
-    <!-- ========================================= -->
+    <!-- VIDEO -->
 
     <div
       id="videoCard"
       class="card hidden"
     >
 
-      <h2>🎥 Final MP4</h2>
+      <h2>
+        🎥 Final MP4
+      </h2>
 
-      <div class="video-wrapper">
+
+      <div
+        class="video-wrapper"
+      >
 
         <video
           id="videoPlayer"
@@ -322,71 +586,111 @@
         class="download-btn"
         href="#"
       >
+
         ⬇️ DOWNLOAD MP4
+
       </a>
 
     </div>
+
 
   </div>
 
 
 <script>
 
+
+// ==================================================
+// API
+// ==================================================
+
 const API =
   "https://unknown-files-agent.gh4sy6ngr6.workers.dev";
 
 
-/* ========================================= */
-/* ELEMENTS */
-/* ========================================= */
+// ==================================================
+// ELEMENTS
+// ==================================================
 
 const createBtn =
-  document.getElementById("createBtn");
+  document.getElementById(
+    "createBtn"
+  );
+
 
 const topicInput =
-  document.getElementById("topic");
+  document.getElementById(
+    "topic"
+  );
+
 
 const statusBox =
-  document.getElementById("status");
+  document.getElementById(
+    "status"
+  );
+
 
 const storyCard =
-  document.getElementById("storyCard");
+  document.getElementById(
+    "storyCard"
+  );
+
 
 const storyBox =
-  document.getElementById("story");
+  document.getElementById(
+    "story"
+  );
+
 
 const audioCard =
-  document.getElementById("audioCard");
+  document.getElementById(
+    "audioCard"
+  );
+
 
 const audio =
-  document.getElementById("audio");
+  document.getElementById(
+    "audio"
+  );
+
 
 const imagesCard =
-  document.getElementById("imagesCard");
+  document.getElementById(
+    "imagesCard"
+  );
+
 
 const imagesBox =
-  document.getElementById("images");
+  document.getElementById(
+    "images"
+  );
+
 
 const videoCard =
-  document.getElementById("videoCard");
+  document.getElementById(
+    "videoCard"
+  );
+
 
 const videoPlayer =
-  document.getElementById("videoPlayer");
+  document.getElementById(
+    "videoPlayer"
+  );
+
 
 const downloadVideo =
-  document.getElementById("downloadVideo");
+  document.getElementById(
+    "downloadVideo"
+  );
 
 
-/* ========================================= */
-/* VIDEO OBJECT URL */
-/* ========================================= */
-
-let currentVideoURL = null;
+let currentVideoURL =
+  null;
 
 
-/* ========================================= */
-/* STATUS */
-/* ========================================= */
+// ==================================================
+// STATUS
+// ==================================================
 
 function showStatus(
   message,
@@ -396,6 +700,7 @@ function showStatus(
   statusBox.className =
     "status";
 
+
   if (type) {
 
     statusBox.classList.add(
@@ -404,8 +709,10 @@ function showStatus(
 
   }
 
+
   statusBox.textContent =
     message;
+
 
   statusBox.classList.remove(
     "hidden"
@@ -414,79 +721,9 @@ function showStatus(
 }
 
 
-/* ========================================= */
-/* RESET */
-/* ========================================= */
-
-function hideResults() {
-
-  storyCard.classList.add(
-    "hidden"
-  );
-
-  audioCard.classList.add(
-    "hidden"
-  );
-
-  imagesCard.classList.add(
-    "hidden"
-  );
-
-  videoCard.classList.add(
-    "hidden"
-  );
-
-
-  storyBox.textContent =
-    "";
-
-
-  audio.removeAttribute(
-    "src"
-  );
-
-  audio.load();
-
-
-  imagesBox.innerHTML =
-    "";
-
-
-  videoPlayer.pause();
-
-  videoPlayer.removeAttribute(
-    "src"
-  );
-
-  videoPlayer.load();
-
-
-  downloadVideo.removeAttribute(
-    "href"
-  );
-
-
-  /* ========================================= */
-  /* CLEAN OLD BLOB URL */
-  /* ========================================= */
-
-  if (currentVideoURL) {
-
-    URL.revokeObjectURL(
-      currentVideoURL
-    );
-
-    currentVideoURL =
-      null;
-
-  }
-
-}
-
-
-/* ========================================= */
-/* BASE64 → BLOB */
-/* ========================================= */
+// ==================================================
+// BASE64 → BLOB
+// ==================================================
 
 function base64ToBlob(
   base64,
@@ -496,15 +733,19 @@ function base64ToBlob(
   const byteCharacters =
     atob(base64);
 
+
   const sliceSize =
     1024 * 1024;
 
-  const byteArrays = [];
+
+  const byteArrays =
+    [];
 
 
   for (
     let offset = 0;
-    offset < byteCharacters.length;
+    offset <
+    byteCharacters.length;
     offset += sliceSize
   ) {
 
@@ -550,15 +791,89 @@ function base64ToBlob(
 }
 
 
-/* ========================================= */
-/* CREATE STORY */
-/* ========================================= */
+// ==================================================
+// RESET
+// ==================================================
+
+function hideResults() {
+
+
+  storyCard.classList.add(
+    "hidden"
+  );
+
+
+  audioCard.classList.add(
+    "hidden"
+  );
+
+
+  imagesCard.classList.add(
+    "hidden"
+  );
+
+
+  videoCard.classList.add(
+    "hidden"
+  );
+
+
+  storyBox.textContent =
+    "";
+
+
+  audio.removeAttribute(
+    "src"
+  );
+
+
+  audio.load();
+
+
+  imagesBox.innerHTML =
+    "";
+
+
+  videoPlayer.pause();
+
+
+  videoPlayer.removeAttribute(
+    "src"
+  );
+
+
+  videoPlayer.load();
+
+
+  downloadVideo.removeAttribute(
+    "href"
+  );
+
+
+  if (currentVideoURL) {
+
+    URL.revokeObjectURL(
+      currentVideoURL
+    );
+
+    currentVideoURL =
+      null;
+
+  }
+
+}
+
+
+// ==================================================
+// CREATE STORY
+// ==================================================
 
 createBtn.addEventListener(
 
   "click",
 
   async () => {
+
 
     const topic =
       topicInput.value.trim();
@@ -586,9 +901,9 @@ createBtn.addEventListener(
     try {
 
 
-      /* ================================= */
-      /* STEP 1 — STORY */
-      /* ================================= */
+      // ==================================================
+      // STEP 1
+      // ==================================================
 
       showStatus(
         "🧠 Creating the story..."
@@ -597,15 +912,19 @@ createBtn.addEventListener(
 
       const storyResponse =
         await fetch(
+
           `${API}/api/create-story`,
+
           {
 
             method:
               "POST",
 
             headers: {
+
               "Content-Type":
                 "application/json"
+
             },
 
             body:
@@ -614,6 +933,7 @@ createBtn.addEventListener(
               })
 
           }
+
         );
 
 
@@ -627,8 +947,10 @@ createBtn.addEventListener(
       ) {
 
         throw new Error(
+
           storyData.error ||
           "Story generation failed."
+
         );
 
       }
@@ -647,10 +969,6 @@ createBtn.addEventListener(
       }
 
 
-      /* ================================= */
-      /* SHOW STORY */
-      /* ================================= */
-
       storyBox.textContent =
         story;
 
@@ -660,17 +978,17 @@ createBtn.addEventListener(
       );
 
 
-      /* ================================= */
-      /* STEP 2 — ASSETS + MP4 */
-      /* ================================= */
+      // ==================================================
+      // STEP 2
+      // ==================================================
 
       showStatus(
 
         "🎙️ Generating voice...\n\n" +
 
-        "🎬 Generating 4 cinematic scenes...\n\n" +
+        "🎬 Generating 4 DIFFERENT scenes...\n\n" +
 
-        "🎥 Preparing MP4 with FFmpeg...\n\n" +
+        "🎥 Preparing MP4...\n\n" +
 
         "⏳ Please wait..."
 
@@ -679,15 +997,19 @@ createBtn.addEventListener(
 
       const assetsResponse =
         await fetch(
+
           `${API}/api/create-assets`,
+
           {
 
             method:
               "POST",
 
             headers: {
+
               "Content-Type":
                 "application/json"
+
             },
 
             body:
@@ -696,6 +1018,7 @@ createBtn.addEventListener(
               })
 
           }
+
         );
 
 
@@ -709,20 +1032,24 @@ createBtn.addEventListener(
       ) {
 
         throw new Error(
+
           assetsData.error ||
           "Asset generation failed."
+
         );
 
       }
 
 
-      /* ================================= */
-      /* AUDIO */
-      /* ================================= */
+      // ==================================================
+      // AUDIO
+      // ==================================================
 
       if (
+
         assetsData.audio &&
         assetsData.audio.url
+
       ) {
 
         audio.src =
@@ -736,20 +1063,30 @@ createBtn.addEventListener(
       }
 
 
-      /* ================================= */
-      /* IMAGES */
-      /* ================================= */
+      // ==================================================
+      // SHOW 4 IMAGES
+      // ==================================================
 
       if (
+
         Array.isArray(
           assetsData.images
         )
+
       ) {
 
+
+        imagesBox.innerHTML =
+          "";
+
+
         for (
+
           const scene
           of assetsData.images
+
         ) {
+
 
           const wrapper =
             document.createElement(
@@ -786,7 +1123,7 @@ createBtn.addEventListener(
 
 
           title.textContent =
-            `Scene ${scene.scene}`;
+            `SCENE ${scene.scene}`;
 
 
           wrapper.appendChild(
@@ -813,40 +1150,39 @@ createBtn.addEventListener(
       }
 
 
-      /* ================================= */
-      /* FINAL MP4 */
-      /* ================================= */
+      // ==================================================
+      // FINAL MP4
+      // ==================================================
 
       if (
+
         assetsData.video &&
         assetsData.video.base64
+
       ) {
 
 
         showStatus(
 
-          "🎥 MP4 received from FFmpeg...\n\n" +
+          "🎥 MP4 received...\n\n" +
 
-          "⏳ Preparing video download..."
+          "⏳ Preparing video..."
 
         );
 
 
-        /* ================================= */
-        /* CREATE REAL BLOB */
-        /* ================================= */
+        // ==================================================
+        // BASE64 → REAL BLOB
+        // ==================================================
 
         const videoBlob =
           base64ToBlob(
+
             assetsData.video.base64,
+
             "video/mp4"
+
           );
-
-
-        console.log(
-          "🎥 Video Blob size:",
-          videoBlob.size
-        );
 
 
         if (
@@ -855,15 +1191,21 @@ createBtn.addEventListener(
         ) {
 
           throw new Error(
-            "The generated MP4 is empty."
+            "Generated MP4 is empty."
           );
 
         }
 
 
-        /* ================================= */
-        /* CREATE OBJECT URL */
-        /* ================================= */
+        console.log(
+          "VIDEO SIZE:",
+          videoBlob.size
+        );
+
+
+        // ==================================================
+        // OBJECT URL
+        // ==================================================
 
         currentVideoURL =
           URL.createObjectURL(
@@ -871,9 +1213,9 @@ createBtn.addEventListener(
           );
 
 
-        /* ================================= */
-        /* VIDEO PLAYER */
-        /* ================================= */
+        // ==================================================
+        // VIDEO PLAYER
+        // ==================================================
 
         videoPlayer.src =
           currentVideoURL;
@@ -882,9 +1224,9 @@ createBtn.addEventListener(
         videoPlayer.load();
 
 
-        /* ================================= */
-        /* DOWNLOAD */
-        /* ================================= */
+        // ==================================================
+        // DOWNLOAD
+        // ==================================================
 
         downloadVideo.href =
           currentVideoURL;
@@ -894,42 +1236,34 @@ createBtn.addEventListener(
           "UNKNOWN_FILES.mp4";
 
 
-        downloadVideo.target =
-          "_blank";
-
-
-        /* ================================= */
-        /* SHOW VIDEO */
-        /* ================================= */
+        // ==================================================
+        // SHOW VIDEO
+        // ==================================================
 
         videoCard.classList.remove(
           "hidden"
         );
 
 
-        /* ================================= */
-        /* SCROLL TO VIDEO */
-        /* ================================= */
-
         setTimeout(
           () => {
 
             videoCard.scrollIntoView({
+
               behavior:
                 "smooth",
 
               block:
                 "start"
+
             });
 
           },
+
           300
+
         );
 
-
-        /* ================================= */
-        /* SUCCESS */
-        /* ================================= */
 
         showStatus(
 
@@ -939,20 +1273,25 @@ createBtn.addEventListener(
 
           "Voice ✓\n" +
 
-          "4 Images ✓\n" +
+          "Scene 1 ✓\n" +
+
+          "Scene 2 ✓\n" +
+
+          "Scene 3 ✓\n" +
+
+          "Scene 4 ✓\n" +
 
           "FFmpeg ✓\n" +
 
-          "MP4 ✓\n\n" +
-
-          "🎬 UNKNOWN_FILES.mp4 is ready.",
+          "MP4 ✓",
 
           "success"
 
         );
 
+      }
 
-      } else {
+      else {
 
         throw new Error(
 
@@ -1004,4 +1343,5 @@ createBtn.addEventListener(
 </script>
 
 </body>
+
 </html>
