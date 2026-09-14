@@ -65,7 +65,7 @@ var worker_default = {
 
         agent: "UNKNOWN FILES",
 
-        version: "5.1",
+        version: "5.2",
 
         image_model:
           "@cf/black-forest-labs/flux-1-schnell",
@@ -144,41 +144,38 @@ Return ONLY the story.
 `;
 
 
-        const result = await aiRun(
+        const result =
+          await aiRun(
 
-          env,
+            env,
 
-          "@cf/qwen/qwen3-30b-a3b-fp8",
+            "@cf/qwen/qwen3-30b-a3b-fp8",
 
-          {
+            {
 
-            messages: [
+              messages: [
 
-              {
+                {
 
-                role: "user",
+                  role: "user",
 
-                content: prompt
+                  content: prompt
 
-              }
+                }
 
-            ],
+              ],
 
-            max_tokens: 500,
+              max_tokens: 500,
 
-            temperature: 0.7
+              temperature: 0.7
 
-          }
+            }
 
-        );
+          );
 
 
         const story =
-          result?.response ||
-          result?.result?.response ||
-          result?.content ||
-          result?.result?.content ||
-          "";
+          extractAIText(result);
 
 
         if (!story) {
@@ -323,11 +320,9 @@ Return ONLY the story.
 
 
           story =
-            storyResult?.response ||
-            storyResult?.result?.response ||
-            storyResult?.content ||
-            storyResult?.result?.content ||
-            "";
+            extractAIText(
+              storyResult
+            );
 
 
           if (!story) {
@@ -355,6 +350,21 @@ ${story}
 
 Create EXACTLY 4 visual scenes for a vertical YouTube Short.
 
+IMPORTANT:
+Each scene MUST represent a different moment in the story.
+
+The four scenes MUST have clearly different:
+
+- camera composition
+- character pose
+- character action
+- environment details
+- location position
+- facial expression
+- visual event
+
+Do NOT describe the same image four times.
+
 CHARACTER CONSISTENCY:
 
 Use the SAME main character in every scene.
@@ -369,7 +379,21 @@ Keep consistent:
 - environment
 - cinematic visual identity
 
-Keep strong visual continuity between scenes.
+The character stays the same, BUT the ACTION and COMPOSITION must change significantly between scenes.
+
+SCENE PROGRESSION:
+
+Scene 1:
+Introduce the location and the main character.
+
+Scene 2:
+Show the mysterious event beginning.
+
+Scene 3:
+Show the situation becoming more disturbing.
+
+Scene 4:
+Show the twist / final mysterious reveal.
 
 STYLE:
 
@@ -437,9 +461,9 @@ Use EXACTLY:
 
               ],
 
-              max_tokens: 1200,
+              max_tokens: 1400,
 
-              temperature: 0.15
+              temperature: 0.2
 
             }
 
@@ -539,7 +563,7 @@ Use EXACTLY:
 
 
         // ==================================================
-        // 4. GENERATE 4 IMAGES
+        // 4. GENERATE 4 DIFFERENT IMAGES
         // ==================================================
 
         const images = [];
@@ -557,22 +581,123 @@ Use EXACTLY:
             );
 
 
+          // ==================================================
+          // IMPORTANT:
+          // FORCE EACH SCENE TO BE VISUALLY DIFFERENT
+          // ==================================================
+
+          const sceneDirection = [
+
+            `
+SCENE 1 — ESTABLISHING SHOT.
+
+Show the main character entering or standing in the main location.
+
+Wide cinematic composition.
+
+Clearly establish the environment.
+
+The character should be visible and relatively small in frame.
+
+This must look like the beginning of the story.
+`,
+
+            `
+SCENE 2 — MYSTERIOUS EVENT.
+
+Show the same character reacting to the mysterious event.
+
+Medium cinematic shot.
+
+Change the camera angle significantly from Scene 1.
+
+Change the character's pose and facial expression.
+
+Show a new visual event happening.
+`,
+
+            `
+SCENE 3 — ESCALATION.
+
+Show the same character much closer to the disturbing situation.
+
+Close or medium-close cinematic shot.
+
+Use a different camera angle.
+
+The character must have a different pose and expression.
+
+The environment should contain new visual information.
+
+This must clearly look like a different moment.
+`,
+
+            `
+SCENE 4 — FINAL REVEAL.
+
+Show the visual twist or mysterious final reveal.
+
+Use a dramatically different composition.
+
+Different camera angle.
+
+Different character position.
+
+Different action.
+
+Create the strongest and most mysterious image of the four scenes.
+`
+
+          ][i];
+
+
           const imagePrompt = `
+
+UNKNOWN FILES — CINEMATIC SCENE ${i + 1} OF 4.
+
+THIS MUST BE A COMPLETELY NEW IMAGE.
+
+DO NOT REUSE THE COMPOSITION OF ANOTHER SCENE.
+
+DO NOT CREATE A STATIC REPEAT OF THE SAME IMAGE.
+
+STORY SCENE:
 
 ${originalScene}
 
-IMPORTANT IMAGE REQUIREMENTS:
+SCENE DIRECTION:
+
+${sceneDirection}
+
+IMPORTANT:
+
+The main character must remain visually consistent
+with the other scenes.
+
+However, the image itself MUST change.
+
+Change:
+
+- camera angle
+- framing
+- character position
+- character pose
+- facial expression
+- action
+- background details
+- lighting emphasis
+- visual event
+
+Keep the same character identity and clothing,
+but create a completely different cinematic moment.
 
 Vertical cinematic composition.
 
-Portrait 9:16 feeling.
+Portrait 9:16.
 
 Realistic professional photography.
 
 Dark mysterious psychological suspense atmosphere.
-
-Keep the same main character and visual identity
-as the other scenes.
 
 No text.
 
@@ -595,6 +720,11 @@ No nudity.
 No sexual content.
 
 `;
+
+
+          console.log(
+            `🎬 Generating UNIQUE IMAGE for SCENE ${i + 1}`
+          );
 
 
           const imageResult =
@@ -629,7 +759,8 @@ No sexual content.
 
           images.push({
 
-            scene: i + 1,
+            scene:
+              i + 1,
 
             prompt:
               originalScene,
@@ -647,7 +778,6 @@ No sexual content.
         // ==================================================
 
         const container =
-
           getContainer(
 
             env.VIDEO_CONTAINER,
@@ -658,7 +788,6 @@ No sexual content.
 
 
         const renderRequest =
-
           new Request(
 
             "http://video/render",
@@ -692,7 +821,6 @@ No sexual content.
 
 
         const renderResponse =
-
           await container.fetch(
             renderRequest
           );
@@ -865,9 +993,6 @@ async function generateSafeImage(
       ).toLowerCase();
 
 
-    // If FLUX safety filter blocks the prompt,
-    // create a safer visual version and retry once.
-
     if (
 
       message.includes("8007") ||
@@ -925,8 +1050,6 @@ function sanitizeImagePrompt(
 
   const replacements = [
 
-    // Violence
-
     [/blood/gi, "dark red lighting"],
 
     [/bloody/gi, "dark dramatic lighting"],
@@ -961,9 +1084,6 @@ function sanitizeImagePrompt(
 
     [/knife/gi, "metallic object"],
 
-
-    // Sexual content
-
     [/nude/gi, "fully clothed"],
 
     [/nudity/gi, "fully clothed"],
@@ -975,9 +1095,6 @@ function sanitizeImagePrompt(
     [/sex/gi, "non-romantic"],
 
     [/erotic/gi, "cinematic"],
-
-
-    // Other potentially sensitive terms
 
     [/torture/gi, "psychological tension"],
 
@@ -1116,17 +1233,11 @@ async function aiRun(
 
         message.includes("7004") ||
 
-        message.includes(
-          "upstream"
-        ) ||
+        message.includes("upstream") ||
 
-        message.includes(
-          "unavailable"
-        ) ||
+        message.includes("unavailable") ||
 
-        message.includes(
-          "timeout"
-        );
+        message.includes("timeout");
 
 
       if (
@@ -1200,12 +1311,9 @@ function extractAIText(result) {
 
 
   if (
-
     result.result &&
-
     typeof result.result.response ===
     "string"
-
   ) {
 
     return result.result.response.trim();
@@ -1214,12 +1322,9 @@ function extractAIText(result) {
 
 
   if (
-
     result.result &&
-
     typeof result.result.content ===
     "string"
-
   ) {
 
     return result.result.content.trim();
@@ -1228,15 +1333,10 @@ function extractAIText(result) {
 
 
   if (
-
     result.result &&
-
     result.result.choices &&
-
     result.result.choices[0] &&
-
     result.result.choices[0].message
-
   ) {
 
     const message =
@@ -1266,13 +1366,9 @@ function extractAIText(result) {
 
 
   if (
-
     result.choices &&
-
     result.choices[0] &&
-
     result.choices[0].message
-
   ) {
 
     const message =
@@ -1303,23 +1399,17 @@ function extractAIText(result) {
 function parseSceneJSON(text) {
 
   let cleaned =
-
     String(text)
-
       .replace(
         /```json/gi,
         ""
       )
-
       .replace(
         /```/g,
         ""
       )
-
       .trim();
 
-
-  // Direct JSON
 
   try {
 
@@ -1328,13 +1418,10 @@ function parseSceneJSON(text) {
 
 
     if (
-
       direct &&
-
       Array.isArray(
         direct.scenes
       )
-
     ) {
 
       return direct;
@@ -1344,8 +1431,6 @@ function parseSceneJSON(text) {
   } catch (e) {}
 
 
-  // Object extraction
-
   const firstBrace =
     cleaned.indexOf("{");
 
@@ -1354,38 +1439,26 @@ function parseSceneJSON(text) {
 
 
   if (
-
     firstBrace !== -1 &&
-
     lastBrace !== -1
-
   ) {
 
     try {
 
       const parsed =
-
         JSON.parse(
-
           cleaned.substring(
-
             firstBrace,
-
             lastBrace + 1
-
           )
-
         );
 
 
       if (
-
         parsed &&
-
         Array.isArray(
           parsed.scenes
         )
-
       ) {
 
         return parsed;
@@ -1397,8 +1470,6 @@ function parseSceneJSON(text) {
   }
 
 
-  // Array extraction
-
   const firstBracket =
     cleaned.indexOf("[");
 
@@ -1407,36 +1478,24 @@ function parseSceneJSON(text) {
 
 
   if (
-
     firstBracket !== -1 &&
-
     lastBracket !== -1
-
   ) {
 
     try {
 
       const array =
-
         JSON.parse(
-
           cleaned.substring(
-
             firstBracket,
-
             lastBracket + 1
-
           )
-
         );
 
 
       if (
-
         Array.isArray(array) &&
-
         array.length === 4
-
       ) {
 
         return {
@@ -1453,18 +1512,12 @@ function parseSceneJSON(text) {
   }
 
 
-  // Last resort
-
   const lines =
-
     cleaned
-
       .split("\n")
-
       .map(
         x => x.trim()
       )
-
       .filter(
         x => x.length > 20
       );
@@ -1479,20 +1532,16 @@ function parseSceneJSON(text) {
       scenes:
 
         lines
-
           .slice(0, 4)
-
           .map(
 
             x =>
 
               x
-
                 .replace(
                   /^[-*0-9.)]+\s*/,
                   ""
                 )
-
                 .replace(
                   /^["']|["']$/g,
                   ""
