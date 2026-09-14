@@ -30,7 +30,7 @@ const SCENE_COUNT = 4;
 
 
 // ==================================================
-// MAIN SERVER
+// HTTP SERVER
 // ==================================================
 
 const server =
@@ -53,8 +53,8 @@ const server =
             {
               status: "ONLINE",
               service: "UNKNOWN FILES VIDEO CONTAINER",
-              port: PORT,
-              engine: "FFmpeg"
+              engine: "FFmpeg",
+              port: PORT
             }
           );
 
@@ -62,7 +62,7 @@ const server =
 
 
         // ==================================================
-        // RENDER
+        // RENDER ENDPOINT
         // ==================================================
 
         if (
@@ -75,7 +75,7 @@ const server =
           );
 
           console.log(
-            "🎬 UNKNOWN FILES /render REQUEST"
+            "🎬 UNKNOWN FILES /render"
           );
 
           console.log(
@@ -92,21 +92,24 @@ const server =
 
 
           console.log(
-            "📤 Sending final MP4 to Worker..."
+            "📤 Sending MP4 back to Worker..."
           );
 
 
           res.statusCode = 200;
+
 
           res.setHeader(
             "Content-Type",
             "video/mp4"
           );
 
+
           res.setHeader(
             "Content-Length",
             video.length
           );
+
 
           res.setHeader(
             "Cache-Control",
@@ -128,10 +131,11 @@ const server =
 
 
         // ==================================================
-        // NOT FOUND
+        // 404
         // ==================================================
 
         res.statusCode = 404;
+
 
         sendJSON(
           res,
@@ -152,7 +156,7 @@ const server =
         );
 
         console.error(
-          error
+          getErrorMessage(error)
         );
 
         console.error(
@@ -160,9 +164,12 @@ const server =
         );
 
 
-        if (!res.headersSent) {
+        if (
+          !res.headersSent
+        ) {
 
           res.statusCode = 500;
+
 
           sendJSON(
             res,
@@ -199,7 +206,7 @@ server.listen(
     );
 
     console.log(
-      `🚀 UNKNOWN FILES CONTAINER ONLINE`
+      "🚀 UNKNOWN FILES CONTAINER ONLINE"
     );
 
     console.log(
@@ -253,7 +260,7 @@ async function createVideo(body) {
 
 
   console.log(
-    "🎬 Starting UNKNOWN FILES video render..."
+    "🎬 Starting video render..."
   );
 
 
@@ -273,15 +280,6 @@ async function createVideo(body) {
     "/tmp/audio.mp3"
   );
 
-
-  console.log(
-    "✅ Audio saved: /tmp/audio.mp3"
-  );
-
-
-  // ==================================================
-  // CHECK AUDIO
-  // ==================================================
 
   const audioSize =
     await getFileSize(
@@ -306,7 +304,7 @@ async function createVideo(body) {
 
 
   // ==================================================
-  // GET AUDIO DURATION
+  // AUDIO DURATION
   // ==================================================
 
   const audioDuration =
@@ -333,7 +331,7 @@ async function createVideo(body) {
 
 
   // ==================================================
-  // CALCULATE SCENE DURATION
+  // SCENE DURATION
   // ==================================================
 
   const sceneDuration =
@@ -341,7 +339,7 @@ async function createVideo(body) {
 
 
   console.log(
-    `🎬 Each scene duration: ${sceneDuration.toFixed(2)} seconds`
+    `🎬 Each scene: ${sceneDuration.toFixed(2)} seconds`
   );
 
 
@@ -378,13 +376,13 @@ async function createVideo(body) {
     );
 
 
-    const imageSize =
+    const size =
       await getFileSize(
         imagePath
       );
 
 
-    const imageHash =
+    const hash =
       await getFileHash(
         imagePath
       );
@@ -395,16 +393,16 @@ async function createVideo(body) {
     );
 
     console.log(
-      `   SIZE: ${imageSize} bytes`
+      `   SIZE: ${size} bytes`
     );
 
     console.log(
-      `   HASH: ${imageHash}`
+      `   HASH: ${hash}`
     );
 
 
     if (
-      imageSize === 0
+      size === 0
     ) {
 
       throw new Error(
@@ -417,10 +415,10 @@ async function createVideo(body) {
 
 
   // ==================================================
-  // COMPARE IMAGE HASHES
+  // VERIFY UNIQUE IMAGES
   // ==================================================
 
-  const imageHashes = [];
+  const hashes = [];
 
 
   for (
@@ -429,7 +427,7 @@ async function createVideo(body) {
     i++
   ) {
 
-    imageHashes.push(
+    hashes.push(
       await getFileHash(
         `/tmp/image${i}.jpg`
       )
@@ -439,7 +437,7 @@ async function createVideo(body) {
 
 
   const uniqueHashes =
-    new Set(imageHashes);
+    new Set(hashes);
 
 
   console.log(
@@ -455,16 +453,12 @@ async function createVideo(body) {
   );
 
 
-  // ==================================================
-  // IMPORTANT DIAGNOSTIC
-  // ==================================================
-
   if (
     uniqueHashes.size === 1
   ) {
 
     throw new Error(
-      "ALL 4 GENERATED IMAGES ARE IDENTICAL. The problem is before FFmpeg: FLUX returned the same image for all scenes."
+      "ALL 4 IMAGES ARE IDENTICAL BEFORE FFMPEG."
     );
 
   }
@@ -475,7 +469,7 @@ async function createVideo(body) {
   ) {
 
     console.log(
-      "⚠️ WARNING: Some scenes contain identical images."
+      "⚠️ Some images are identical."
     );
 
   } else {
@@ -488,7 +482,7 @@ async function createVideo(body) {
 
 
   // ==================================================
-  // CREATE 4 SEPARATE SCENE VIDEOS
+  // FFMPEG DIRECT 4-SCENE RENDER
   // ==================================================
 
   console.log(
@@ -496,7 +490,7 @@ async function createVideo(body) {
   );
 
   console.log(
-    "🎥 CREATING 4 INDEPENDENT SCENE VIDEOS"
+    "🎥 BUILDING 4 SCENES DIRECTLY"
   );
 
   console.log(
@@ -504,329 +498,150 @@ async function createVideo(body) {
   );
 
 
-  for (
-    let i = 1;
-    i <= SCENE_COUNT;
-    i++
-  ) {
+  // ==================================================
+  // FILTER
+  // ==================================================
 
-    const input =
-      `/tmp/image${i}.jpg`;
+  const filter = `
 
+[0:v]
+scale=1080:1920:force_original_aspect_ratio=increase,
+crop=1080:1920,
+setsar=1,
+fps=30,
+trim=duration=${sceneDuration},
+setpts=PTS-STARTPTS
+[v0];
 
-    const output =
-      `/tmp/scene${i}.mp4`;
+[1:v]
+scale=1080:1920:force_original_aspect_ratio=increase,
+crop=1080:1920,
+setsar=1,
+fps=30,
+trim=duration=${sceneDuration},
+setpts=PTS-STARTPTS
+[v1];
 
+[2:v]
+scale=1080:1920:force_original_aspect_ratio=increase,
+crop=1080:1920,
+setsar=1,
+fps=30,
+trim=duration=${sceneDuration},
+setpts=PTS-STARTPTS
+[v2];
 
-    console.log(
-      `🎬 Rendering SCENE ${i}...`
-    );
+[3:v]
+scale=1080:1920:force_original_aspect_ratio=increase,
+crop=1080:1920,
+setsar=1,
+fps=30,
+trim=duration=${sceneDuration},
+setpts=PTS-STARTPTS
+[v3];
 
-
-    await renderScene(
-      input,
-      output,
-      sceneDuration
-    );
-
-
-    const sceneSize =
-      await getFileSize(
-        output
-      );
-
-
-    console.log(
-      `✅ SCENE ${i} MP4 created`
-    );
-
-    console.log(
-      `   SIZE: ${sceneSize} bytes`
-    );
-
-
-    if (
-      sceneSize === 0
-    ) {
-
-      throw new Error(
-        `Scene ${i} MP4 is empty.`
-      );
-
-    }
-
-  }
+[v0][v1][v2][v3]
+concat=n=4:v=1:a=0,
+format=yuv420p
+[v]
+`;
 
 
   // ==================================================
-  // CREATE CONCAT FILE
+  // RUN FFMPEG
   // ==================================================
-
-  console.log(
-    "🔗 Creating concat list..."
-  );
-
-
-  const concatList = [
-
-    "file '/tmp/scene1.mp4'",
-
-    "file '/tmp/scene2.mp4'",
-
-    "file '/tmp/scene3.mp4'",
-
-    "file '/tmp/scene4.mp4'"
-
-  ].join("\n");
-
-
-  await writeFile(
-    "/tmp/concat.txt",
-    concatList,
-    "utf8"
-  );
-
-
-  console.log(
-    "✅ Concat list created."
-  );
-
-
-  // ==================================================
-  // CONCAT SCENES
-  // ==================================================
-
-  console.log(
-    "========================================"
-  );
-
-  console.log(
-    "🔗 JOINING SCENE 1 + 2 + 3 + 4"
-  );
-
-  console.log(
-    "========================================"
-  );
-
 
   await runFFmpeg([
 
     "-y",
 
-    "-f",
-    "concat",
-
-    "-safe",
-    "0",
-
-    "-i",
-    "/tmp/concat.txt",
-
-    "-c",
-    "copy",
-
-    "-movflags",
-    "+faststart",
-
-    "/tmp/video-no-audio.mp4"
-
-  ]);
-
-
-  const joinedVideoSize =
-    await getFileSize(
-      "/tmp/video-no-audio.mp4"
-    );
-
-
-  console.log(
-    `✅ Four scenes joined: ${joinedVideoSize} bytes`
-  );
-
-
-  // ==================================================
-  // ADD AUDIO
-  // ==================================================
-
-  console.log(
-    "========================================"
-  );
-
-  console.log(
-    "🎙️ ADDING AUDIO"
-  );
-
-  console.log(
-    "========================================"
-  );
-
-
-  await runFFmpeg([
-
-    "-y",
-
-    // VIDEO
-    "-i",
-    "/tmp/video-no-audio.mp4",
-
-    // AUDIO
-    "-i",
-    "/tmp/audio.mp3",
-
-    // VIDEO MAP
-    "-map",
-    "0:v:0",
-
-    // AUDIO MAP
-    "-map",
-    "1:a:0",
-
-    // COPY VIDEO
-    "-c:v",
-    "copy",
-
-    // AUDIO
-    "-c:a",
-    "aac",
-
-    "-b:a",
-    "192k",
-
-    // END WITH AUDIO
-    "-shortest",
-
-    // FAST START
-    "-movflags",
-    "+faststart",
-
-    // OUTPUT
-    "/tmp/UNKNOWN_FILES.mp4"
-
-  ]);
-
-
-  // ==================================================
-  // FINAL VIDEO
-  // ==================================================
-
-  const finalSize =
-    await getFileSize(
-      "/tmp/UNKNOWN_FILES.mp4"
-    );
-
-
-  console.log(
-    "========================================"
-  );
-
-  console.log(
-    "🎥 FINAL VIDEO"
-  );
-
-  console.log(
-    `📦 SIZE: ${finalSize} bytes`
-  );
-
-  console.log(
-    "========================================"
-  );
-
-
-  if (
-    finalSize === 0
-  ) {
-
-    throw new Error(
-      "Final UNKNOWN_FILES.mp4 is empty."
-    );
-
-  }
-
-
-  const video =
-    await readFile(
-      "/tmp/UNKNOWN_FILES.mp4"
-    );
-
-
-  console.log(
-    "✅ FINAL MP4 READY"
-  );
-
-
-  return video;
-
-}
-
-
-// ==================================================
-// RENDER ONE SCENE
-// ==================================================
-
-async function renderScene(
-  input,
-  output,
-  duration
-) {
-
-  // ==================================================
-  // SAFETY
-  // ==================================================
-
-  if (
-    !Number.isFinite(duration) ||
-    duration <= 0
-  ) {
-
-    throw new Error(
-      "Invalid scene duration."
-    );
-
-  }
-
-
-  // ==================================================
-  // FFmpeg
-  // ==================================================
-
-  await runFFmpeg([
-
-    "-y",
 
     // ==================================================
-    // LOOP IMAGE
+    // IMAGE 1
     // ==================================================
 
     "-loop",
     "1",
 
     "-framerate",
-    String(FPS),
+    "30",
 
     "-i",
-    input,
+    "/tmp/image1.jpg",
 
 
     // ==================================================
-    // EXACT SCENE DURATION
+    // IMAGE 2
     // ==================================================
 
-    "-t",
-    duration.toFixed(3),
+    "-loop",
+    "1",
+
+    "-framerate",
+    "30",
+
+    "-i",
+    "/tmp/image2.jpg",
 
 
     // ==================================================
-    // VERTICAL FORMAT
+    // IMAGE 3
     // ==================================================
 
-    "-vf",
+    "-loop",
+    "1",
 
-    [
-      `scale=${VIDEO_WIDTH}:${VIDEO_HEIGHT}:force_original_aspect_ratio=increase`,
-      `crop=${VIDEO_WIDTH}:${VIDEO_HEIGHT}`,
-      "setsar=1",
-      "format=yuv420p"
-    ].join(","),
+    "-framerate",
+    "30",
+
+    "-i",
+    "/tmp/image3.jpg",
+
+
+    // ==================================================
+    // IMAGE 4
+    // ==================================================
+
+    "-loop",
+    "1",
+
+    "-framerate",
+    "30",
+
+    "-i",
+    "/tmp/image4.jpg",
+
+
+    // ==================================================
+    // AUDIO
+    // ==================================================
+
+    "-i",
+    "/tmp/audio.mp3",
+
+
+    // ==================================================
+    // FILTER
+    // ==================================================
+
+    "-filter_complex",
+    filter,
+
+
+    // ==================================================
+    // MAP VIDEO
+    // ==================================================
+
+    "-map",
+    "[v]",
+
+
+    // ==================================================
+    // MAP AUDIO
+    // ==================================================
+
+    "-map",
+    "4:a:0",
 
 
     // ==================================================
@@ -843,26 +658,105 @@ async function renderScene(
     "23",
 
     "-r",
-    String(FPS),
+    "30",
 
     "-pix_fmt",
     "yuv420p",
 
 
     // ==================================================
-    // NO AUDIO
+    // AUDIO
     // ==================================================
 
-    "-an",
+    "-c:a",
+    "aac",
+
+    "-b:a",
+    "192k",
+
+
+    // ==================================================
+    // STOP WITH AUDIO
+    // ==================================================
+
+    "-shortest",
+
+
+    // ==================================================
+    // FAST START
+    // ==================================================
+
+    "-movflags",
+    "+faststart",
 
 
     // ==================================================
     // OUTPUT
     // ==================================================
 
-    output
+    "/tmp/UNKNOWN_FILES.mp4"
 
   ]);
+
+
+  // ==================================================
+  // CHECK FINAL VIDEO
+  // ==================================================
+
+  const finalSize =
+    await getFileSize(
+      "/tmp/UNKNOWN_FILES.mp4"
+    );
+
+
+  console.log(
+    "========================================"
+  );
+
+  console.log(
+    `🎥 FINAL MP4 SIZE: ${finalSize} bytes`
+  );
+
+  console.log(
+    "========================================"
+  );
+
+
+  if (
+    finalSize === 0
+  ) {
+
+    throw new Error(
+      "Final MP4 is empty."
+    );
+
+  }
+
+
+  // ==================================================
+  // READ VIDEO
+  // ==================================================
+
+  const video =
+    await readFile(
+      "/tmp/UNKNOWN_FILES.mp4"
+    );
+
+
+  console.log(
+    "========================================"
+  );
+
+  console.log(
+    "✅ FINAL 4-SCENE MP4 CREATED"
+  );
+
+  console.log(
+    "========================================"
+  );
+
+
+  return video;
 
 }
 
@@ -959,9 +853,9 @@ async function saveInput(
 
 
     if (
-      !metadata.toLowerCase().includes(
-        "base64"
-      )
+      !metadata
+        .toLowerCase()
+        .includes("base64")
     ) {
 
       throw new Error(
@@ -978,7 +872,7 @@ async function saveInput(
 
 
   // ==================================================
-  // REMOVE WHITESPACE
+  // CLEAN BASE64
   // ==================================================
 
   base64 =
@@ -989,7 +883,7 @@ async function saveInput(
 
 
   // ==================================================
-  // BASE64 → BUFFER
+  // DECODE
   // ==================================================
 
   let buffer;
@@ -1024,6 +918,10 @@ async function saveInput(
   }
 
 
+  // ==================================================
+  // WRITE
+  // ==================================================
+
   await writeFile(
     filePath,
     buffer
@@ -1033,7 +931,7 @@ async function saveInput(
 
 
 // ==================================================
-// GET FILE SIZE
+// FILE SIZE
 // ==================================================
 
 async function getFileSize(
@@ -1116,7 +1014,9 @@ async function getMediaDuration(
 
   const duration =
     Number(
-      String(result.stdout).trim()
+      String(
+        result.stdout
+      ).trim()
     );
 
 
@@ -1125,7 +1025,7 @@ async function getMediaDuration(
   ) {
 
     throw new Error(
-      "FFprobe returned an invalid media duration."
+      "FFprobe returned invalid duration."
     );
 
   }
@@ -1165,7 +1065,7 @@ function runCommand(
     (resolve, reject) => {
 
       console.log(
-        `▶️ ${command} ${args.join(" ")}`
+        `▶️ ${command}`
       );
 
 
@@ -1198,12 +1098,8 @@ function runCommand(
         "data",
         data => {
 
-          const text =
-            data.toString();
-
-
           stdout +=
-            text;
+            data.toString();
 
         }
       );
@@ -1224,10 +1120,6 @@ function runCommand(
           stderr +=
             text;
 
-
-          // FFmpeg writes normal progress
-          // information to stderr.
-          // Only print the latest useful part.
 
           if (
             command === "ffmpeg"
@@ -1318,7 +1210,7 @@ function runCommand(
 
 
 // ==================================================
-// CLEAN OLD FILES
+// CLEAN TEMP FILES
 // ==================================================
 
 async function cleanOldFiles() {
@@ -1364,8 +1256,7 @@ async function cleanOldFiles() {
 
     } catch (error) {
 
-      // File may not exist.
-      // Ignore.
+      // Ignore missing files.
 
     }
 
@@ -1373,14 +1264,14 @@ async function cleanOldFiles() {
 
 
   console.log(
-    "🧹 Old temporary files cleaned."
+    "🧹 Temporary files cleaned."
   );
 
 }
 
 
 // ==================================================
-// READ JSON REQUEST
+// READ JSON
 // ==================================================
 
 function readJSON(
@@ -1411,14 +1302,14 @@ function readJSON(
 
           try {
 
-            const parsed =
+            const body =
               JSON.parse(
                 data
               );
 
 
             resolve(
-              parsed
+              body
             );
 
           } catch (error) {
@@ -1426,7 +1317,7 @@ function readJSON(
             reject(
 
               new Error(
-                `Invalid JSON request: ${getErrorMessage(error)}`
+                `Invalid JSON: ${getErrorMessage(error)}`
               )
 
             );
