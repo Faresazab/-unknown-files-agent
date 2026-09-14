@@ -102,6 +102,7 @@ var worker_default = {
         const body =
           await request.json();
 
+
         const topic =
           body.topic ||
           "A mysterious event that nobody can explain";
@@ -144,6 +145,11 @@ Return ONLY the story.
 `;
 
 
+        console.log(
+          "🧠 Generating story..."
+        );
+
+
         const result =
           await aiRun(
 
@@ -165,7 +171,7 @@ Return ONLY the story.
 
               ],
 
-              max_tokens: 500,
+              max_tokens: 800,
 
               temperature: 0.7
 
@@ -180,11 +186,20 @@ Return ONLY the story.
 
         if (!story) {
 
+          console.error(
+            "❌ Qwen returned no extractable story."
+          );
+
           throw new Error(
             "Story generation returned empty content."
           );
 
         }
+
+
+        console.log(
+          "✅ Story generated successfully."
+        );
 
 
         return json({
@@ -199,6 +214,12 @@ Return ONLY the story.
 
 
       } catch (error) {
+
+        console.error(
+          "CREATE STORY ERROR:",
+          error
+        );
+
 
         return json({
 
@@ -215,7 +236,7 @@ Return ONLY the story.
 
 
     // ==================================================
-    // CREATE ASSETS
+    // CREATE ASSETS + GENERATE MP4
     // ==================================================
 
     if (
@@ -289,6 +310,11 @@ Return ONLY the story.
 `;
 
 
+          console.log(
+            "🧠 Generating story inside create-assets..."
+          );
+
+
           const storyResult =
             await aiRun(
 
@@ -310,7 +336,7 @@ Return ONLY the story.
 
                 ],
 
-                max_tokens: 500,
+                max_tokens: 800,
 
                 temperature: 0.7
 
@@ -339,6 +365,11 @@ Return ONLY the story.
         // ==================================================
         // 2. CREATE 4 SCENES
         // ==================================================
+
+        console.log(
+          "🎬 Creating 4 scene prompts..."
+        );
+
 
         const scenePrompt = `
 
@@ -506,9 +537,19 @@ Use EXACTLY:
         }
 
 
+        console.log(
+          "✅ 4 scene prompts created."
+        );
+
+
         // ==================================================
         // 3. CREATE VOICE
         // ==================================================
+
+        console.log(
+          "🎙️ Generating voice..."
+        );
+
 
         const tts =
           await aiRun(
@@ -558,6 +599,11 @@ Use EXACTLY:
         }
 
 
+        console.log(
+          "✅ Voice generated."
+        );
+
+
         // ==================================================
         // 4. GENERATE 4 DIFFERENT IMAGES
         // ==================================================
@@ -578,7 +624,7 @@ Use EXACTLY:
 
 
           // ==================================================
-          // UNIQUE SEED
+          // UNIQUE RANDOM SEED
           // ==================================================
 
           const seed =
@@ -588,7 +634,7 @@ Use EXACTLY:
 
 
           // ==================================================
-          // SCENE-SPECIFIC DIRECTION
+          // SCENE DIRECTIONS
           // ==================================================
 
           const sceneDirections = [
@@ -605,6 +651,8 @@ The environment must be clearly visible.
 The character should be relatively small in frame.
 
 This is the beginning of the story.
+
+Create a strong establishing composition.
 `,
 
             `
@@ -620,7 +668,9 @@ Change the character's pose.
 
 Change the facial expression.
 
-Show a NEW visual event.
+Show a NEW visual event happening.
+
+Do not copy Scene 1 composition.
 `,
 
             `
@@ -637,6 +687,8 @@ Change the character's pose.
 Change the facial expression.
 
 Add NEW environmental information.
+
+The character should appear more tense.
 
 This must clearly look like a different moment.
 `,
@@ -655,6 +707,8 @@ Place the character differently in the frame.
 Change the action and expression.
 
 Create the strongest and most mysterious image.
+
+This must NOT look like Scene 1, Scene 2, or Scene 3.
 `
 
           ];
@@ -672,11 +726,11 @@ Create the strongest and most mysterious image.
 
 UNKNOWN FILES — SCENE ${i + 1} OF 4.
 
-THIS IS A NEW CINEMATIC FRAME.
+THIS MUST BE A COMPLETELY NEW IMAGE.
 
-DO NOT REUSE ANOTHER SCENE'S COMPOSITION.
+DO NOT REUSE THE COMPOSITION OF ANOTHER SCENE.
 
-DO NOT CREATE A DUPLICATE IMAGE.
+DO NOT CREATE A STATIC REPEAT OF THE SAME IMAGE.
 
 STORY SCENE:
 
@@ -752,25 +806,21 @@ No sexual content.
 
 
           console.log(
-            `========================================`
+            "========================================"
           );
 
           console.log(
-            `🎬 SCENE ${i + 1}`
+            `🎬 GENERATING SCENE ${i + 1}`
           );
 
           console.log(
-            `🎲 UNIQUE SEED: ${seed}`
+            `🎲 SEED: ${seed}`
           );
 
           console.log(
-            `========================================`
+            "========================================"
           );
 
-
-          // ==================================================
-          // GENERATE IMAGE WITH UNIQUE SEED
-          // ==================================================
 
           const imageResult =
             await generateSafeImage(
@@ -809,7 +859,7 @@ No sexual content.
           );
 
           console.log(
-            `📦 Image characters: ${base64Image.length}`
+            `📦 Image size: ${base64Image.length} characters`
           );
 
 
@@ -1001,8 +1051,19 @@ No sexual content.
       } catch (error) {
 
         console.error(
-          "UNKNOWN FILES ERROR:",
+          "========================================"
+        );
+
+        console.error(
+          "❌ UNKNOWN FILES ERROR"
+        );
+
+        console.error(
           error
+        );
+
+        console.error(
+          "========================================"
         );
 
 
@@ -1091,6 +1152,11 @@ async function generateSafeImage(
       message.includes("input prompt")
 
     ) {
+
+      console.log(
+        "⚠️ Image prompt triggered safety filter."
+      );
+
 
       const safePrompt =
         sanitizeImagePrompt(
@@ -1290,23 +1356,37 @@ async function aiRun(
 
     try {
 
-      return await env.AI.run(
+      console.log(
+        `🤖 AI request: ${model} | attempt ${attempt}`
+      );
 
-        model,
 
-        input,
+      const result =
+        await env.AI.run(
 
-        {
+          model,
 
-          gateway: {
+          input,
 
-            id: "default"
+          {
+
+            gateway: {
+
+              id: "default"
+
+            }
 
           }
 
-        }
+        );
 
+
+      console.log(
+        `✅ AI request completed: ${model}`
       );
+
+
+      return result;
 
     } catch (error) {
 
@@ -1318,6 +1398,12 @@ async function aiRun(
         getErrorMessage(
           error
         ).toLowerCase();
+
+
+      console.error(
+        `❌ AI error attempt ${attempt}:`,
+        message
+      );
 
 
       const retryable =
@@ -1360,17 +1446,31 @@ async function aiRun(
 
 
 // ==================================================
-// EXTRACT AI TEXT
+// EXTRACT AI TEXT - ROBUST VERSION
 // ==================================================
 
 function extractAIText(result) {
 
+  console.log(
+    "🧠 RAW AI RESULT:",
+    JSON.stringify(result)
+  );
+
+
   if (!result) {
+
+    console.log(
+      "❌ AI result is null or undefined."
+    );
 
     return "";
 
   }
 
+
+  // ==================================================
+  // DIRECT STRING
+  // ==================================================
 
   if (
     typeof result === "string"
@@ -1381,9 +1481,12 @@ function extractAIText(result) {
   }
 
 
+  // ==================================================
+  // STANDARD CLOUDFLARE RESPONSE
+  // ==================================================
+
   if (
-    typeof result.response ===
-    "string"
+    typeof result.response === "string"
   ) {
 
     return result.response.trim();
@@ -1391,9 +1494,26 @@ function extractAIText(result) {
   }
 
 
+  // ==================================================
+  // NESTED RESPONSE
+  // ==================================================
+
   if (
-    typeof result.content ===
-    "string"
+    result.result &&
+    typeof result.result.response === "string"
+  ) {
+
+    return result.result.response.trim();
+
+  }
+
+
+  // ==================================================
+  // CONTENT
+  // ==================================================
+
+  if (
+    typeof result.content === "string"
   ) {
 
     return result.content.trim();
@@ -1403,19 +1523,7 @@ function extractAIText(result) {
 
   if (
     result.result &&
-    typeof result.result.response ===
-    "string"
-  ) {
-
-    return result.result.response.trim();
-
-  }
-
-
-  if (
-    result.result &&
-    typeof result.result.content ===
-    "string"
+    typeof result.result.content === "string"
   ) {
 
     return result.result.content.trim();
@@ -1423,59 +1531,111 @@ function extractAIText(result) {
   }
 
 
+  // ==================================================
+  // OPENAI STYLE
+  // ==================================================
+
+  if (
+    Array.isArray(result.choices) &&
+    result.choices.length > 0
+  ) {
+
+    const choice =
+      result.choices[0];
+
+
+    if (
+      choice.message &&
+      typeof choice.message.content === "string"
+    ) {
+
+      return choice.message.content.trim();
+
+    }
+
+
+    if (
+      typeof choice.text === "string"
+    ) {
+
+      return choice.text.trim();
+
+    }
+
+  }
+
+
+  // ==================================================
+  // NESTED OPENAI STYLE
+  // ==================================================
+
   if (
     result.result &&
-    result.result.choices &&
-    result.result.choices[0] &&
-    result.result.choices[0].message
+    Array.isArray(result.result.choices) &&
+    result.result.choices.length > 0
   ) {
 
-    const message =
-      result.result.choices[0].message;
+    const choice =
+      result.result.choices[0];
 
 
     if (
-      typeof message.content ===
-      "string"
+      choice.message &&
+      typeof choice.message.content === "string"
     ) {
 
-      return message.content.trim();
+      return choice.message.content.trim();
 
     }
 
 
     if (
-      typeof message.reasoning_content ===
-      "string"
+      typeof choice.text === "string"
     ) {
 
-      return message.reasoning_content.trim();
+      return choice.text.trim();
 
     }
+
+  }
+
+
+  // ==================================================
+  // REASONING CONTENT
+  // ==================================================
+
+  if (
+    typeof result.reasoning_content === "string"
+  ) {
+
+    return result.reasoning_content.trim();
 
   }
 
 
   if (
-    result.choices &&
-    result.choices[0] &&
-    result.choices[0].message
+    result.result &&
+    typeof result.result.reasoning_content === "string"
   ) {
 
-    const message =
-      result.choices[0].message;
-
-
-    if (
-      typeof message.content ===
-      "string"
-    ) {
-
-      return message.content.trim();
-
-    }
+    return result.result.reasoning_content.trim();
 
   }
+
+
+  // ==================================================
+  // LAST RESORT
+  // ==================================================
+
+  console.log(
+    "❌ Could not extract text from AI response."
+  );
+
+
+  console.log(
+    "❌ AI RESULT KEYS:",
+    Object.keys(result)
+  );
 
 
   return "";
